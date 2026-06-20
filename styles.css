@@ -1,0 +1,334 @@
+:root{--ink:#17202a;--panel:rgba(255,255,255,.94);--gold:#f7c948;--green:#06d6a0;--blue:#118ab2;--purple:#7b61ff;--red:#ef476f;--sky:#9bd7ff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,#4d7cff,#152447 42%,#070b18 100%);color:white;display:grid;place-items:center;overflow-x:hidden}.game-shell{width:min(1240px,97vw);display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}.screen-wrap{position:relative;background:linear-gradient(145deg,#101a34,#050817);padding:14px;border-radius:28px;box-shadow:0 25px 80px rgba(0,0,0,.55);overflow:hidden}.screen-wrap:before{content:"";position:absolute;inset:-80px;background:radial-gradient(circle at 20% 10%,rgba(247,201,72,.25),transparent 28%),radial-gradient(circle at 80% 5%,rgba(6,214,160,.18),transparent 30%),radial-gradient(circle at 50% 100%,rgba(123,97,255,.25),transparent 32%);pointer-events:none}canvas{position:relative;width:100%;max-height:78vh;aspect-ratio:16/10;background:#76b852;image-rendering:pixelated;border-radius:20px;display:block;border:4px solid #ffffff28}.hud{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:4px;pointer-events:none;z-index:5;max-width:104px}.pill{background:rgba(10,15,30,.78);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:4px 8px;font-size:11px;font-weight:900;box-shadow:0 5px 14px rgba(0,0,0,.24);backdrop-filter:blur(6px);min-width:88px;max-width:104px;text-align:center;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#hudTool{max-width:104px}.panel{background:var(--panel);color:var(--ink);border-radius:28px;padding:18px;box-shadow:0 22px 60px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.55)}.panel h1{font-size:30px;margin:0 0 4px;letter-spacing:-1px}.panel h2{font-size:17px;margin:16px 0 8px}.subtitle,.small{color:#5e6b78;font-size:13px;line-height:1.4}.card{background:white;border:2px solid #e6edf6;border-radius:18px;padding:12px;margin-top:10px}.tier-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tier-chip{border:2px solid #e6edf6;background:#f8fbff;border-radius:14px;padding:9px;font-size:12px;font-weight:900}.tier-chip.active{background:linear-gradient(135deg,#17202a,#33415c);color:white;border-color:#f7c948}.quest-title{font-weight:950}.progress-track{height:14px;border-radius:99px;background:#e9eef5;overflow:hidden;border:1px solid #d6deea}.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#06d6a0,#118ab2,#7b61ff,#f7c948);transition:.35s}.tool-list{display:grid;gap:8px}.tool-card{display:flex;gap:10px;align-items:center;background:#fff;border:2px solid #e6edf6;border-radius:15px;padding:10px}.tool-icon{font-size:23px;width:30px;text-align:center}button{border:0;border-radius:999px;padding:10px 14px;background:#17202a;color:white;font-weight:950;cursor:pointer;margin:4px 3px 0 0}button.secondary{background:#e9eef5;color:#17202a}button.good{background:#087f5b}button.warn{background:#b7791f}.dialogue,.overlay{position:absolute;z-index:10}.dialogue{left:30px;right:30px;bottom:84px;background:rgba(255,255,255,.98);color:var(--ink);border:3px solid #17202a;border-radius:20px;padding:15px 17px 28px;box-shadow:0 12px 35px rgba(0,0,0,.35);display:none;max-height:42vh;overflow:auto}.dialogue strong{color:#1f4e79}.overlay{inset:14px;border-radius:20px;display:none;place-items:center;text-align:center;padding:28px}.start-overlay{display:grid;background:linear-gradient(135deg,rgba(7,11,24,.96),rgba(26,50,101,.96));overflow:hidden}.start-overlay:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 25% 20%,rgba(247,201,72,.25),transparent 18%),radial-gradient(circle at 80% 30%,rgba(6,214,160,.20),transparent 22%)}.start-card,.lesson-card,.celebrate-card{position:relative;z-index:2;max-width:790px}.start-card h1{font-size:clamp(44px,7vw,82px);margin:0;letter-spacing:-3px}.start-card p{font-size:18px;line-height:1.5;color:#e8f1ff}.lesson-overlay{background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(231,243,255,.98));color:var(--ink)}.lesson-card{background:white;border:4px solid #17202a;border-radius:28px;padding:28px;box-shadow:0 18px 50px rgba(0,0,0,.32)}.lesson-card h1{font-size:40px;margin:0}.lesson-card ul{text-align:left;line-height:1.7;font-size:18px}.celebrate-overlay{background:radial-gradient(circle,#fff6bf 0%,#ffd166 30%,#7b61ff 100%);color:#17202a;overflow:hidden}.celebrate-card{background:rgba(255,255,255,.94);border:4px solid #17202a;border-radius:30px;padding:28px;box-shadow:0 22px 70px rgba(0,0,0,.42)}.celebrate-card h1{font-size:48px;margin:0}.badge-row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:16px 0}.badge{background:#17202a;color:white;border-radius:16px;padding:10px 13px;font-weight:950}.confetti{position:absolute;top:-30px;width:11px;height:22px;border-radius:4px;animation:fall 2.4s linear infinite}.sparkle{position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;animation:pop 1.1s infinite ease-in-out}@keyframes fall{to{transform:translateY(720px) rotate(600deg)}}@keyframes pop{50%{transform:scale(2.4);opacity:.35}}.breathing{background:rgba(7,11,24,.9);color:white}.breath-circle{width:155px;height:155px;border-radius:50%;background:radial-gradient(circle,#d7f9ff,#7b61ff);box-shadow:0 0 55px #7b61ff;margin:20px auto;animation:breathe 6s infinite ease-in-out}@keyframes breathe{0%,100%{transform:scale(.7)}50%{transform:scale(1.16)}}.audio-bar{position:absolute;right:22px;bottom:18px;z-index:30;display:flex;align-items:center;gap:8px;margin:0;padding:8px;background:rgba(255,255,255,.96);color:#17202a;border-radius:999px;border:2px solid rgba(255,255,255,.75);box-shadow:0 10px 25px rgba(0,0,0,.28);max-width:min(430px,calc(100% - 44px));transition:.2s ease}.audio-bar.collapsed{padding:7px}.audio-toggle{min-width:44px;height:40px;border-radius:999px!important;padding:0 12px!important;font-size:18px}.audio-panel{display:flex;align-items:center;gap:8px;max-width:360px;overflow:hidden;transition:max-width .22s ease,opacity .18s ease}.audio-bar.collapsed .audio-panel{max-width:0;opacity:0;pointer-events:none}.audio-bar button{margin:0;background:#17202a;color:white;white-space:nowrap}.audio-status{font-size:12px;font-weight:800;color:#51606f;white-space:nowrap}.audio-help{display:none;position:absolute;right:0;bottom:54px;background:rgba(255,255,255,.96);color:#17202a;border-radius:14px;padding:8px 10px;font-size:12px;font-weight:800;box-shadow:0 8px 22px rgba(0,0,0,.22);width:max-content;max-width:260px}.audio-bar:not(.collapsed) .audio-help{display:block}.mobile-pad{display:none;grid-template-columns:repeat(3,58px);gap:8px;justify-content:center;margin-top:10px;touch-action:none;user-select:none;-webkit-user-select:none}.mobile-pad button{border-radius:14px;padding:14px 10px;min-height:48px;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.20);touch-action:none;-webkit-tap-highlight-color:transparent}.mobile-pad button:active,.mobile-pad button.active{transform:scale(.96);filter:brightness(1.12)}.mobile-pad button.jump{background:#7b61ff}.mobile-pad button.breathe{background:#087f5b}.mobile-pad button.fox{background:#ef476f}
+.fox-reward-list{display:grid;gap:7px}.fox-reward-row{display:flex;align-items:center;gap:8px;padding:8px;border-radius:12px;background:#f8fbff;border:1px solid #e6edf6}.fox-reward-row.unlocked{background:linear-gradient(135deg,#fff8db,#e7fff6);border-color:#f7c948}.fox-reward-icon{font-size:20px;width:28px;text-align:center}.fox-reward-row strong{display:block}.fox-reward-row span{font-size:11px;color:#5e6b78}.star-pop{animation:starHudPop .65s ease both}@keyframes starHudPop{0%{transform:scale(1)}35%{transform:scale(1.22);background:#f7c948;color:#17202a;box-shadow:0 0 24px #f7c948}100%{transform:scale(1)}}
+.pill.star-pop{animation:hudStarPop .55s ease;box-shadow:0 0 0 3px rgba(247,201,72,.32),0 0 22px rgba(247,201,72,.9)}
+@keyframes hudStarPop{0%{transform:scale(1)}35%{transform:scale(1.16);background:rgba(247,201,72,.95);color:#17202a}100%{transform:scale(1)}}
+@media(max-width:930px){body{place-items:start center;padding:8px 0}.game-shell{grid-template-columns:1fr;width:min(100%,98vw)}canvas{max-height:68vh}.hud{left:6px;top:6px;gap:3px;max-width:86px}.pill{padding:3px 6px;font-size:10px;min-width:74px;max-width:86px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,.2)}#hudTool{max-width:86px}.dialogue{left:18px;right:18px;bottom:82px;padding-bottom:30px;max-height:44vh}body.game-active .mobile-pad{display:grid;position:relative;z-index:20}.mobile-pad{display:none}.mobile-pad button{min-height:48px;font-size:16px}.panel{order:2}.audio-bar{right:14px;bottom:14px;max-width:calc(100% - 28px)}.audio-status{display:none}.start-card p{font-size:16px}.lesson-card,.celebrate-card{padding:20px}.lesson-card h1,.celebrate-card h1{font-size:32px}}
+
+
+/* === Layout patch: keep game board stationary while side panel scrolls === */
+@media (min-width: 931px){
+  body{
+    height:100vh;
+    overflow:hidden;
+    padding:12px 0;
+    place-items:center;
+  }
+
+  .game-shell{
+    height:calc(100vh - 24px);
+    align-items:start;
+  }
+
+  .screen-wrap{
+    position:sticky;
+    top:12px;
+    align-self:start;
+  }
+
+  .panel{
+    max-height:calc(100vh - 24px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    padding-right:14px;
+  }
+
+  .panel::-webkit-scrollbar{width:10px}
+  .panel::-webkit-scrollbar-track{background:rgba(23,32,42,.08);border-radius:999px}
+  .panel::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#7b61ff,#118ab2,#06d6a0);border-radius:999px;border:2px solid rgba(255,255,255,.7)}
+}
+
+@media (max-width:930px){
+  body{
+    overflow-x:hidden;
+    overflow-y:auto;
+  }
+
+  .screen-wrap{
+    position:relative;
+  }
+
+  .panel{
+    max-height:none;
+    overflow:visible;
+  }
+}
+
+
+/* === Mobile start-screen fix: keep Start Adventure visible and controls out of the way === */
+@media (max-width:930px){
+  canvas{
+    max-height:62vh;
+  }
+
+  .start-overlay{
+    inset:10px;
+    overflow-y:auto;
+    place-items:start center;
+    align-content:start;
+    padding:18px 12px 72px;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .start-card{
+    width:min(100%,520px);
+    padding-top:4px;
+  }
+
+  .start-card h1{
+    font-size:clamp(34px,12vw,52px);
+    letter-spacing:-1.5px;
+    line-height:.95;
+    margin-bottom:8px;
+  }
+
+  .start-card p{
+    font-size:14px;
+    line-height:1.38;
+    margin:8px 0 10px;
+  }
+
+  .start-card button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:12px 18px;
+    margin-top:8px;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+  }
+
+  .start-card .small{
+    font-size:11px!important;
+    line-height:1.35;
+    margin-top:8px!important;
+  }
+
+  body:not(.game-active) .mobile-pad{
+    display:none!important;
+  }
+}
+
+
+/* Mobile polish patch: keep controls away from Fox/dialogue responses and allow comfortable play. */
+@media(max-width:930px){
+  body.game-active .mobile-pad{
+    margin-top:24px;
+    margin-bottom:10px;
+    z-index:6;
+  }
+  .mobile-pad button{
+    min-height:46px;
+    padding:12px 9px;
+  }
+  .dialogue{
+    bottom:150px;
+    z-index:45;
+    max-height:34vh;
+  }
+  .audio-bar{
+    z-index:50;
+  }
+}
+@media(max-width:520px){
+  body.game-active .mobile-pad{
+    margin-top:30px;
+    margin-bottom:14px;
+    transform:scale(.96);
+    transform-origin:center top;
+  }
+  .dialogue{
+    bottom:158px;
+    left:14px;
+    right:14px;
+    max-height:32vh;
+  }
+}
+
+
+/* Large readable discovery cards for mobile/desktop discoveries */
+.discovery-overlay{
+  background:linear-gradient(135deg,rgba(7,11,24,.94),rgba(18,36,75,.96));
+  color:white;
+  z-index:60;
+  padding:22px;
+}
+.discovery-card{
+  width:min(680px,92%);
+  max-height:calc(100% - 28px);
+  overflow:auto;
+  background:rgba(255,255,255,.96);
+  color:#17202a;
+  border:4px solid #f7c948;
+  border-radius:28px;
+  padding:24px;
+  box-shadow:0 24px 70px rgba(0,0,0,.48);
+}
+.discovery-icon{
+  font-size:58px;
+  line-height:1;
+  margin-bottom:8px;
+  filter:drop-shadow(0 8px 10px rgba(0,0,0,.25));
+}
+.discovery-card h1{
+  font-size:clamp(30px,6vw,54px);
+  margin:0 0 8px;
+  letter-spacing:-1px;
+}
+.discovery-card p{
+  font-size:clamp(17px,3.5vw,22px);
+  line-height:1.45;
+  margin:10px auto 16px;
+  max-width:560px;
+}
+.discovery-card .fox-line{
+  background:#fff7d6;
+  border:2px solid #f7c948;
+  border-radius:18px;
+  padding:12px 14px;
+  font-weight:900;
+  margin:12px auto;
+}
+.discovery-card button{
+  font-size:18px;
+  padding:13px 22px;
+  min-width:160px;
+}
+@media(max-width:930px){
+  .discovery-overlay{
+    inset:8px;
+    padding:12px;
+    align-items:center;
+  }
+  .discovery-card{
+    width:96%;
+    max-height:86vh;
+    padding:18px 16px;
+    border-radius:22px;
+  }
+  .discovery-icon{font-size:48px}
+  .discovery-card button{
+    width:100%;
+    margin-top:8px;
+    font-size:17px;
+  }
+}
+
+
+
+/* === Mobile playfield height refinement ===
+   Keep controls where they are, but give the actual game canvas more vertical room. */
+@media(max-width:930px){
+  body.game-active .screen-wrap{
+    padding:10px;
+  }
+
+  body.game-active canvas{
+    width:100%;
+    height:min(62dvh, calc(100vw * .82));
+    max-height:none;
+    aspect-ratio:auto;
+  }
+
+  body.game-active .mobile-pad{
+    margin-top:16px;
+    margin-bottom:8px;
+  }
+
+  body.game-active .panel{
+    margin-top:18px;
+  }
+}
+
+@media(max-width:520px){
+  body.game-active canvas{
+    height:min(60dvh, calc(100vw * .86));
+  }
+
+  body.game-active .mobile-pad{
+    margin-top:14px;
+    margin-bottom:8px;
+    transform:scale(.94);
+  }
+}
+
+
+
+/* === Mobile end-of-level overlay fix ===
+   Keep Review / Continue buttons reachable on phones after winning a level. */
+@media(max-width:930px){
+  .celebrate-overlay,
+  .lesson-overlay{
+    inset:8px;
+    padding:10px;
+    overflow:hidden;
+    align-items:center;
+    justify-items:center;
+    z-index:70;
+  }
+
+  .celebrate-card,
+  .lesson-card{
+    width:min(96%, 620px);
+    max-height:calc(100% - 12px);
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:16px 14px 18px;
+    border-radius:22px;
+  }
+
+  .celebrate-card h1,
+  .lesson-card h1{
+    font-size:clamp(26px, 8vw, 34px);
+    line-height:1.05;
+  }
+
+  .celebrate-card p,
+  .lesson-card p,
+  .lesson-card li{
+    font-size:15px;
+    line-height:1.35;
+  }
+
+  .lesson-card ul{
+    padding-left:20px;
+    margin:10px 0 12px;
+  }
+
+  .badge-row{
+    gap:6px;
+    margin:10px 0;
+  }
+
+  .badge{
+    padding:7px 9px;
+    font-size:12px;
+    border-radius:12px;
+  }
+
+  .celebrate-card button,
+  .lesson-card button{
+    position:sticky;
+    bottom:0;
+    width:100%;
+    margin-top:10px;
+    padding:13px 14px;
+    font-size:16px;
+    box-shadow:0 -8px 16px rgba(255,255,255,.92), 0 8px 18px rgba(0,0,0,.24);
+  }
+}
+
+@media(max-width:520px){
+  .celebrate-overlay,
+  .lesson-overlay{
+    inset:6px;
+    padding:8px;
+  }
+
+  .celebrate-card,
+  .lesson-card{
+    max-height:calc(100% - 8px);
+    padding:14px 12px 16px;
+  }
+}

@@ -550,12 +550,10 @@ const SpriteAtlas = {
     fox_idle1: { x: 0, y: 192, w: 96, h: 96 },
     fox_idle2: { x: 96, y: 192, w: 96, h: 96 },
     fox_walk1: { x: 192, y: 192, w: 96, h: 96 },
-    fox_walk2: { x: 288, y: 192, w: 96, h: 96 },
-    fox_happy: { x: 384, y: 192, w: 96, h: 96 },
-    fox_thinking: { x: 480, y: 192, w: 96, h: 96 },
+    fox_walk2: { x: 384, y: 192, w: 96, h: 96 },
+    fox_happy: { x: 480, y: 192, w: 96, h: 96 },
     fox_celebrate: { x: 576, y: 192, w: 96, h: 96 },
     fox_talk: { x: 672, y: 192, w: 96, h: 96 },
-  
     // FOX ROW 3
     fox_sit1: { x: 0, y: 288, w: 96, h: 96 },
     fox_sit2: { x: 96, y: 288, w: 96, h: 96 },
@@ -569,7 +567,7 @@ const SpriteAtlas = {
 };
 SpriteAtlas.img.onload = () => { SpriteAtlas.ready = true; console.log('Focus Quest sprite atlas loaded:', SpriteAtlas.img.naturalWidth + 'x' + SpriteAtlas.img.naturalHeight); };
 SpriteAtlas.img.onerror = () => { console.error('Focus Quest sprite atlas failed to load. Check assets/sprites/focus_quest_sprite_atlas_v1.png'); };
-SpriteAtlas.img.src = './assets/sprites/focus_quest_production_sprite_atlas_v6_clean_aligned.png';
+SpriteAtlas.img.src = './assets/sprites/focus_quest_production_sprite_atlas_v7_96_aligned.png';
 
 function drawAtlasFrame(name, dx, dy, dw, dh, flip=false){
   const f = SpriteAtlas.frames[name];

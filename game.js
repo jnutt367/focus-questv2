@@ -605,7 +605,7 @@ function drawPlayer(){
     const x = player.x;
     const y = player.y - player.z;
     const squash = player.landingSquash > 0 ? player.landingSquash / 10 : 0;
-    const mobileScale = window.innerWidth <= 930 ? 1.35 : 1;
+    const mobileScale = window.innerWidth <= 930 ? 1.8 : 1;
   
     const sw = (48 + squash * 3) * mobileScale;
     const sh = (58 - squash * 2) * mobileScale;

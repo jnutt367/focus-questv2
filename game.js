@@ -699,7 +699,6 @@ function drawPlayer(){
   const x = player.x;
   const y = player.y - player.z;
   const squash = player.landingSquash>0 ? player.landingSquash/10 : 0;
-  const mobileScale = window.innerWidth <= 930 ? 1.9 : 1;
   const sw = 48 + squash*3;
   const sh = 58 - squash*2;
   const bob = player.moving && !player.jumping ? Math.sin(player.walkFrame*.42)*1.5 : 0;
@@ -726,7 +725,6 @@ function currentFoxSpriteFrame(){
 function drawFidgetFox(){
   if(!state.started) return;
   if(!SpriteAtlas.ready) return originalDrawFidgetFox();
-  const mobileScale = window.innerWidth <= 930 ? 1.7 : 1;
   const bob=Math.sin(Date.now()/260)*2;
   const x=fox.x, y=fox.y+bob;
   ctx.save();

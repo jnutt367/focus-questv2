@@ -600,27 +600,55 @@ function currentPlayerSpriteFrame(){
 }
 
 function drawPlayer(){
-  if(!SpriteAtlas.ready) return originalDrawPlayer();
-  const x = player.x;
-  const y = player.y - player.z;
-  const squash = player.landingSquash>0 ? player.landingSquash/10 : 0;
-  const mobileScale = window.innerWidth <= 930 ? 1.8 : 1;
-  const sw = 48 + squash*3;
-  const sh = 58 - squash*2;
-  const bob = player.moving && !player.jumping ? Math.sin(player.walkFrame*.42)*1.5 : 0;
-  ctx.fillStyle='rgba(0,0,0,.25)';
-  ctx.beginPath();
-  ctx.ellipse(player.x+17, player.y+39, Math.max(10,18-player.z*.15), Math.max(3,7-player.z*.06), 0, 0, Math.PI*2);
-  ctx.fill();
-  if(player.jumping){
-    ctx.strokeStyle='rgba(255,246,191,.65)';
-    ctx.lineWidth=2;
+    if(!SpriteAtlas.ready) return originalDrawPlayer();
+  
+    const x = player.x;
+    const y = player.y - player.z;
+    const squash = player.landingSquash > 0 ? player.landingSquash / 10 : 0;
+    const mobileScale = window.innerWidth <= 930 ? 1.35 : 1;
+  
+    const sw = (48 + squash * 3) * mobileScale;
+    const sh = (58 - squash * 2) * mobileScale;
+  
+    const bob = player.moving && !player.jumping
+      ? Math.sin(player.walkFrame * .42) * 1.5
+      : 0;
+  
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
     ctx.beginPath();
-    ctx.arc(x+17,y+26,25+Math.sin(Date.now()/90)*3,0,Math.PI*2);
-    ctx.stroke();
+    ctx.ellipse(
+      player.x + 17,
+      player.y + 39,
+      Math.max(10, 18 - player.z * .15),
+      Math.max(3, 7 - player.z * .06),
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  
+    if(player.jumping){
+      ctx.strokeStyle = 'rgba(255,246,191,.65)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(
+        x + 17,
+        y + 26,
+        25 + Math.sin(Date.now() / 90) * 3,
+        0,
+        Math.PI * 2
+      );
+      ctx.stroke();
+    }
+  
+    drawAtlasFrame(
+      currentPlayerSpriteFrame(),
+      x + 17 - sw / 2,
+      y + 18 - sh / 2 + bob + squash,
+      sw,
+      sh
+    );
   }
-  drawAtlasFrame(currentPlayerSpriteFrame(), x-7-(sw-48)/2, y-12+bob+squash, sw, sh);
-}
 
 function currentFoxSpriteFrame(){
   if(fox.bubbleTimer>0) return Math.floor(Date.now()/300)%2===0?'fox_talk':'fox_idle1';

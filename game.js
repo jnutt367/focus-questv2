@@ -605,7 +605,7 @@ function drawPlayer(){
     const x = player.x;
     const y = player.y - player.z;
     const squash = player.landingSquash > 0 ? player.landingSquash / 10 : 0;
-    const mobileScale = window.innerWidth <= 930 ? 1.8 : 1;
+    const mobileScale = window.innerWidth <= 930 ? 1. : 1;
   
     const sw = (48 + squash * 3) * mobileScale;
     const sh = (58 - squash * 2) * mobileScale;
@@ -657,28 +657,167 @@ function currentFoxSpriteFrame(){
 }
 
 function drawFidgetFox(){
-  if(!state.started) return;
-  if(!SpriteAtlas.ready) return originalDrawFidgetFox();
-  const bob=Math.sin(Date.now()/260)*2;
-  const x=fox.x, y=fox.y+bob;
-  ctx.save();
-  ctx.fillStyle='rgba(0,0,0,.22)';
-  ctx.beginPath();ctx.ellipse(x+18,y+31,18,6,0,0,Math.PI*2);ctx.fill();
-  drawAtlasFrame(currentFoxSpriteFrame(), x-15, y-18, 64, 56);
-  // Keep reward accessories as overlay layers so the star reward system still matters.
-  if(foxHas('bandana')){ctx.fillStyle='#ef476f';ctx.beginPath();ctx.moveTo(x+10,y+17);ctx.lineTo(x+32,y+17);ctx.lineTo(x+22,y+25);ctx.fill();}
-  if(foxHas('backpack')){ctx.fillStyle='#7b4f2a';round(x+2,y+16,12,14,3);ctx.fill();ctx.strokeStyle='#f7c948';ctx.lineWidth=1.5;ctx.stroke();}
-  if(foxHas('lantern')){ctx.save();ctx.globalAlpha=.45+.2*Math.sin(Date.now()/220);ctx.fillStyle='#fff6bf';ctx.beginPath();ctx.arc(x+38,y+28,25,0,Math.PI*2);ctx.fill();ctx.restore();ctx.fillStyle='#f7c948';round(x+34,y+19,8,12,3);ctx.fill();ctx.strokeStyle='#17202a';ctx.stroke();}
-  if(foxHas('radar')){ctx.save();ctx.globalAlpha=.28+.15*Math.sin(Date.now()/180);ctx.strokeStyle='#06d6a0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+20,y+8,24+Math.sin(Date.now()/180)*4,0,Math.PI*2);ctx.stroke();ctx.restore();}
-  if(foxHas('golden')){ctx.save();ctx.globalAlpha=.95;ctx.globalCompositeOperation='screen';ctx.fillStyle='rgba(247,201,72,.18)';ctx.beginPath();ctx.arc(x+20,y+8,38,0,Math.PI*2);ctx.fill();ctx.restore();drawStarShape(x+40,y-7,5,'#fff6bf','#f7c948');drawStarShape(x+1,y-4,4,'#fff6bf','#f7c948');}
-  if(fox.bubbleTimer>0){
-    const bx=Math.min(Math.max(x-24,110),760), by=Math.max(42,y-58);
-    ctx.globalAlpha=Math.min(1,fox.bubbleTimer/25);
-    ctx.fillStyle='rgba(255,255,255,.96)';round(bx,by,190,42,12);ctx.fill();
-    ctx.strokeStyle='rgba(23,32,42,.3)';ctx.stroke();
-    ctx.fillStyle='#17202a';ctx.font='900 11px system-ui';ctx.textAlign='left';wrapText(fox.tip,bx+10,by+16,170,13);
+    if(!state.started) return;
+    if(!SpriteAtlas.ready) return originalDrawFidgetFox();
+  
+    const mobileScale = window.innerWidth <= 930 ? 1.35 : 1;
+  
+    const bob = Math.sin(Date.now() / 260) * 2;
+    const x = fox.x;
+    const y = fox.y + bob;
+  
+    const fw = 64 * mobileScale;
+    const fh = 56 * mobileScale;
+  
+    const drawX = x + 18 - fw / 2;
+    const drawY = y + 10 - fh / 2;
+  
+    ctx.save();
+  
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    ctx.beginPath();
+    ctx.ellipse(
+      x + 18,
+      y + 31,
+      18 * mobileScale,
+      6 * mobileScale,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  
+    drawAtlasFrame(
+      currentFoxSpriteFrame(),
+      drawX,
+      drawY,
+      fw,
+      fh
+    );
+  
+    // Reward accessories stay aligned with the scaled fox
+    if(foxHas('bandana')){
+      ctx.fillStyle = '#ef476f';
+      ctx.beginPath();
+      ctx.moveTo(x + 10 * mobileScale, y + 17 * mobileScale);
+      ctx.lineTo(x + 32 * mobileScale, y + 17 * mobileScale);
+      ctx.lineTo(x + 22 * mobileScale, y + 25 * mobileScale);
+      ctx.fill();
+    }
+  
+    if(foxHas('backpack')){
+      ctx.fillStyle = '#7b4f2a';
+      round(
+        x + 2 * mobileScale,
+        y + 16 * mobileScale,
+        12 * mobileScale,
+        14 * mobileScale,
+        3 * mobileScale
+      );
+      ctx.fill();
+      ctx.strokeStyle = '#f7c948';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  
+    if(foxHas('lantern')){
+      ctx.save();
+      ctx.globalAlpha = .45 + .2 * Math.sin(Date.now() / 220);
+      ctx.fillStyle = '#fff6bf';
+      ctx.beginPath();
+      ctx.arc(
+        x + 38 * mobileScale,
+        y + 28 * mobileScale,
+        25 * mobileScale,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+      ctx.restore();
+  
+      ctx.fillStyle = '#f7c948';
+      round(
+        x + 34 * mobileScale,
+        y + 19 * mobileScale,
+        8 * mobileScale,
+        12 * mobileScale,
+        3 * mobileScale
+      );
+      ctx.fill();
+      ctx.strokeStyle = '#17202a';
+      ctx.stroke();
+    }
+  
+    if(foxHas('radar')){
+      ctx.save();
+      ctx.globalAlpha = .28 + .15 * Math.sin(Date.now() / 180);
+      ctx.strokeStyle = '#06d6a0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(
+        x + 20 * mobileScale,
+        y + 8 * mobileScale,
+        (24 + Math.sin(Date.now() / 180) * 4) * mobileScale,
+        0,
+        Math.PI * 2
+      );
+      ctx.stroke();
+      ctx.restore();
+    }
+  
+    if(foxHas('golden')){
+      ctx.save();
+      ctx.globalAlpha = .95;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = 'rgba(247,201,72,.18)';
+      ctx.beginPath();
+      ctx.arc(
+        x + 20 * mobileScale,
+        y + 8 * mobileScale,
+        38 * mobileScale,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+      ctx.restore();
+  
+      drawStarShape(
+        x + 40 * mobileScale,
+        y - 7 * mobileScale,
+        5 * mobileScale,
+        '#fff6bf',
+        '#f7c948'
+      );
+  
+      drawStarShape(
+        x + 1 * mobileScale,
+        y - 4 * mobileScale,
+        4 * mobileScale,
+        '#fff6bf',
+        '#f7c948'
+      );
+    }
+  
+    if(fox.bubbleTimer > 0){
+      const bx = Math.min(Math.max(x - 24, 110), 760);
+      const by = Math.max(42, y - 58);
+  
+      ctx.globalAlpha = Math.min(1, fox.bubbleTimer / 25);
+      ctx.fillStyle = 'rgba(255,255,255,.96)';
+      round(bx, by, 190, 42, 12);
+      ctx.fill();
+  
+      ctx.strokeStyle = 'rgba(23,32,42,.3)';
+      ctx.stroke();
+  
+      ctx.fillStyle = '#17202a';
+      ctx.font = '900 11px system-ui';
+      ctx.textAlign = 'left';
+  
+      wrapText(fox.tip, bx + 10, by + 16, 170, 13);
+    }
+  
+    ctx.restore();
   }
-  ctx.restore();
-}
 
 ui();loop();

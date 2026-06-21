@@ -1,5 +1,5 @@
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),TILE=48;
-const E={tier:by('hudTier'),level:by('hudLevel'),energy:by('hudEnergy'),stars:by('hudStars'),tool:by('hudTool'),dialogue:by('dialogue'),dialogueText:by('dialogueText'),dialogueActions:by('dialogueActions'),progress:by('progress'),sideTitle:by('sideTitle'),sideGoal:by('sideGoal'),questTitle:by('questTitle'),questText:by('questText'),tools:by('tools'),foxRewards:by('foxRewards'),teachBox:by('teachBox'),tierGrid:by('tierGrid'),lesson:by('lesson'),lessonTitle:by('lessonTitle'),lessonIntro:by('lessonIntro'),lessonList:by('lessonList'),celebrate:by('celebrate'),celebrateTitle:by('celebrateTitle'),celebrateText:by('celebrateText'),badgeRow:by('badgeRow'),confetti:by('confettiLayer'),discovery:by('discovery'),discoveryIcon:by('discoveryIcon'),discoveryTitle:by('discoveryTitle'),discoveryText:by('discoveryText'),discoveryFox:by('discoveryFox')};
+const E={tier:by('hudTier'),level:by('hudLevel'),energy:by('hudEnergy'),stars:by('hudStars'),coins:by('hudCoins'),tool:by('hudTool'),dialogue:by('dialogue'),dialogueText:by('dialogueText'),dialogueActions:by('dialogueActions'),progress:by('progress'),sideTitle:by('sideTitle'),sideGoal:by('sideGoal'),questTitle:by('questTitle'),questText:by('questText'),tools:by('tools'),foxRewards:by('foxRewards'),teachBox:by('teachBox'),tierGrid:by('tierGrid'),lesson:by('lesson'),lessonTitle:by('lessonTitle'),lessonIntro:by('lessonIntro'),lessonList:by('lessonList'),celebrate:by('celebrate'),celebrateTitle:by('celebrateTitle'),celebrateText:by('celebrateText'),badgeRow:by('badgeRow'),confetti:by('confettiLayer'),discovery:by('discovery'),discoveryIcon:by('discoveryIcon'),discoveryTitle:by('discoveryTitle'),discoveryText:by('discoveryText'),discoveryFox:by('discoveryFox')};
 function by(id){return document.getElementById(id)}
 // --- Audio layer: WebAudio synth, no external files needed. Browser-safe: starts only after a click/tap. ---
 const AudioGame=(()=>{
@@ -113,7 +113,7 @@ const levelThemes=[
 ];
 function makeLevels(){let arr=[];tiers.forEach((tier,ti)=>{for(let i=0;i<3;i++){const th=levelThemes[(ti*3+i)%levelThemes.length];arr.push({...th,tier,tierIndex:ti,difficulty:ti+1,index:arr.length,map:baseMaps[(ti+i)%baseMaps.length],bg:['#69b96b','#5fa9d8','#9b7bd7','#d86f5f'][ti],start:(ti===0&&i===0?[2,14]:[2+i,9-i]),badge:`${tier} Badge ${i+1}`})}});return arr}
 const levels=makeLevels();
-let state={started:false,level:0,keys:{},step:0,energy:5,stars:0,tools:[],met:false,chest:false,challenge:false,ready:false,message:false,hardMode:0,completed:false,foxUnlocks:[],forestSecrets:{grove:false,crystal:false,path:false}};
+let state={started:false,level:0,keys:{},step:0,energy:5,stars:0,tools:[],met:false,chest:false,challenge:false,ready:false,message:false,hardMode:0,completed:false,foxUnlocks:[],forestSecrets:{grove:false,crystal:false,path:false},coins:0,hasFocusBlade:false,bushes:[],drops:[],slashing:false,slashTimer:0};
 let player={x:120,y:430,w:34,h:42,spd:3,color:'#2f80ed',z:0,vz:0,jumping:false,dir:'down',moving:false,walkFrame:0,walkDust:0,landingSquash:0,jumpCooldown:0};
 let camera={x:0,y:0};
 let fox={x:80,y:450,w:34,h:24,bubbleTimer:0,tip:'I’m Fidget Fox. I’ll help you remember the skill.',mood:'ready'};
@@ -158,15 +158,146 @@ function foxRewardMessage(r){
 let particles=[];
 let flyingStars=[];
 function lvl(){return levels[state.level]}
-function startGame(){document.body.classList.add('game-active');AudioGame.unlock();AudioGame.sfx('start');by('start').style.display='none';state.started=true;resetLevel();foxSpeak('start');showMessage('Inner Coach',`Welcome to ${lvl().title}. Talk to ${lvl().npc}, complete the practice challenge, open the chest, then reach the gate.`)}
-function resetLevel(){let [sx,sy]=lvl().start;[sx,sy]=findSafeStart(sx,sy);player.x=sx*TILE;player.y=sy*TILE;state.step=0;state.met=false;state.chest=false;state.challenge=false;state.ready=false;state.energy=Math.max(2,5-state.hardMode);player.z=0;player.vz=0;player.jumping=false;player.moving=false;player.walkFrame=0;player.walkDust=0;player.landingSquash=0;player.jumpCooldown=0;fox.x=player.x-42;fox.y=player.y+12;fox.bubbleTimer=0;particles=[];flyingStars=[];}
+function startGame(){document.body.classList.add('game-active');AudioGame.unlock();AudioGame.sfx('start');by('start').style.display='none';state.started=true;resetLevel();state.hasFocusBlade=true;setupBushes();foxSpeak('start');showMessage('Inner Coach',`Welcome to ${lvl().title}. Talk to ${lvl().npc}, complete the practice challenge, open the chest, then reach the gate.`)}
+function resetLevel(){let [sx,sy]=lvl().start;[sx,sy]=findSafeStart(sx,sy);player.x=sx*TILE;player.y=sy*TILE;state.step=0;state.met=false;state.chest=false;state.challenge=false;state.ready=false;state.energy=Math.max(2,5-state.hardMode);player.z=0;player.vz=0;player.jumping=false;player.moving=false;player.walkFrame=0;player.walkDust=0;player.landingSquash=0;player.jumpCooldown=0;fox.x=player.x-42;fox.y=player.y+12;fox.bubbleTimer=0;particles=[];flyingStars=[];setupBushes();}
 function updateCamera(){
   const L=lvl();
   const mapW=L.map[0].length*TILE, mapH=L.map.length*TILE;
   camera.x=Math.max(0,Math.min(mapW-canvas.width,player.x+player.w/2-canvas.width/2));
   camera.y=Math.max(0,Math.min(mapH-canvas.height,player.y+player.h/2-canvas.height/2));
 }
-function draw(){const L=lvl();updateCamera();drawSky(L);ctx.save();ctx.translate(-camera.x,-camera.y);for(let y=0;y<L.map.length;y++)for(let x=0;x<L.map[y].length;x++)drawTile(L.map[y][x],x*TILE,y*TILE,x,y,L);drawScenery(L);drawForestExpansionDecor();drawCharacter(15*TILE,5*TILE,'#06d6a0',L.npc);drawChest(16*TILE,8*TILE);drawBoard(4*TILE,4*TILE);drawGate(16*TILE,10*TILE);drawFidgetFox();drawPlayer();drawParticles();ctx.restore();drawFlyingStars();drawVignette()}
+
+function setupBushes(){
+  // Distraction Bushes: optional Zelda-style objects the Focus Blade can clear.
+  // They use world coordinates, so they work with the camera-following map.
+  const L=lvl();
+  const focusForest = state.level===0;
+  state.bushes = focusForest ? [
+    { x: 6*TILE,  y: 6*TILE, cut:false, reward:'coin' },
+    { x: 7*TILE,  y: 6*TILE, cut:false, reward:'coin' },
+    { x: 10*TILE, y: 8*TILE, cut:false, reward:'coin' },
+    { x: 12*TILE, y: 5*TILE, cut:false, reward:'coin' },
+    { x: 18*TILE, y: 7*TILE, cut:false, reward:'coin' },
+    { x: 5*TILE,  y: 2*TILE, cut:false, reward:'coin' },
+    { x: 6*TILE,  y: 2*TILE, cut:false, reward:'coin' }
+  ] : [
+    { x: 7*TILE, y: 5*TILE, cut:false, reward:'coin' },
+    { x: 11*TILE, y: 7*TILE, cut:false, reward:'coin' },
+    { x: 13*TILE, y: 4*TILE, cut:false, reward:'coin' }
+  ];
+  state.drops=[];
+  state.slashing=false;
+  state.slashTimer=0;
+}
+
+function slashFocusBlade(){
+  if(!state.started || state.message) return;
+  if(!state.hasFocusBlade){
+    showMessage('Fidget Fox','You have not found the Focus Blade yet.');
+    return;
+  }
+
+  state.slashing = true;
+  state.slashTimer = 14;
+  AudioGame.sfx('success');
+
+  const range = 54;
+  let sx = player.x + 17;
+  let sy = player.y + 22;
+
+  if(player.dir === 'up') sy -= range;
+  else if(player.dir === 'down') sy += range;
+  else if(player.dir === 'left') sx -= range;
+  else if(player.dir === 'right') sx += range;
+
+  let hitAny=false;
+  state.bushes.forEach(bush => {
+    if(bush.cut) return;
+    const bx = bush.x + 24;
+    const by = bush.y + 24;
+    const hit = Math.hypot(sx - bx, sy - by) < 62;
+    if(hit){
+      hitAny=true;
+      bush.cut = true;
+      state.coins += 1;
+      state.drops.push({ x: bush.x + 18, y: bush.y + 8, type: 'coin', life: 85 });
+      for(let i=0;i<16;i++) particles.push({x:bx,y:by,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4-1,life:28,color:['#2f9e44','#69db7c','#b2f2bb'][i%3],size:3+Math.random()*4});
+    }
+  });
+
+  if(hitAny){
+    foxSay('Nice! You cleared a Distraction Bush and found a Focus Coin.');
+  }
+}
+
+function drawBushes(){
+  if(!state.bushes) return;
+  state.bushes.forEach(bush => {
+    if(bush.cut) return;
+    ctx.save();
+    ctx.fillStyle = '#1f7a3f';
+    ctx.beginPath();
+    ctx.arc(bush.x + 13, bush.y + 27, 15, 0, Math.PI * 2);
+    ctx.arc(bush.x + 28, bush.y + 19, 18, 0, Math.PI * 2);
+    ctx.arc(bush.x + 42, bush.y + 28, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#69db7c';
+    ctx.beginPath();
+    ctx.arc(bush.x + 23, bush.y + 18, 5, 0, Math.PI * 2);
+    ctx.arc(bush.x + 35, bush.y + 29, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawDrops(){
+  if(!state.drops) return;
+  state.drops.forEach(drop => {
+    if(drop.life <= 0) return;
+    const bob = Math.sin(Date.now() / 120) * 4;
+    if(drop.type === 'coin'){
+      ctx.save();
+      ctx.fillStyle = '#f7c948';
+      ctx.strokeStyle = '#8a6d00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(drop.x + 12, drop.y + bob, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fff3bf';
+      ctx.font = '900 12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('$', drop.x + 12, drop.y + bob + 4);
+      ctx.restore();
+    }
+    drop.life--;
+  });
+}
+
+function drawSlash(){
+  if(!state.slashing || state.slashTimer <= 0) return;
+  const t = state.slashTimer;
+  const alpha = t / 14;
+  let sx = player.x + 17;
+  let sy = player.y + 22;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = '#fff6bf';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  if(player.dir === 'up') ctx.arc(sx, sy - 34, 28, Math.PI * 1.1, Math.PI * 1.9);
+  else if(player.dir === 'left') ctx.arc(sx - 34, sy, 28, Math.PI * .6, Math.PI * 1.4);
+  else if(player.dir === 'right') ctx.arc(sx + 34, sy, 28, -Math.PI * .4, Math.PI * .4);
+  else ctx.arc(sx, sy + 34, 28, Math.PI * .1, Math.PI * .9);
+  ctx.stroke();
+  ctx.restore();
+  state.slashTimer--;
+  if(state.slashTimer <= 0) state.slashing = false;
+}
+
+function draw(){const L=lvl();updateCamera();drawSky(L);ctx.save();ctx.translate(-camera.x,-camera.y);for(let y=0;y<L.map.length;y++)for(let x=0;x<L.map[y].length;x++)drawTile(L.map[y][x],x*TILE,y*TILE,x,y,L);drawScenery(L);drawForestExpansionDecor();drawBushes();drawDrops();drawSlash();drawCharacter(15*TILE,5*TILE,'#06d6a0',L.npc);drawChest(16*TILE,8*TILE);drawBoard(4*TILE,4*TILE);drawGate(16*TILE,10*TILE);drawFidgetFox();drawPlayer();drawParticles();ctx.restore();drawFlyingStars();drawVignette()}
 function drawSky(L){ctx.fillStyle=L.bg;ctx.fillRect(0,0,960,600);ctx.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<18;i++){ctx.beginPath();ctx.arc((i*91+Date.now()/80)%980,40+(i%4)*28,16+i%3*4,0,Math.PI*2);ctx.fill()}}
 function drawTile(t,x,y,gx,gy,L){let c=t==='T'?'#21452f':t==='P'?'#d9b46f':t==='W'?'#3fa9f5':t==='M'?'#4b5563':t==='H'?'#8b5e34':'#7fc96d';ctx.fillStyle=c;ctx.fillRect(x,y,TILE,TILE);ctx.strokeStyle='rgba(0,0,0,.06)';ctx.strokeRect(x,y,TILE,TILE);if(t==='G'){ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(x+8,y+8,5,5);ctx.fillRect(x+30,y+27,4,4);if((gx+gy)%5===0){drawTinyFlower(x+33,y+10,'#fff6bf')}if((gx*2+gy)%7===0){drawTinyFlower(x+11,y+33,'#ef476f')}}if(t==='P'){ctx.fillStyle='rgba(90,54,22,.18)';ctx.beginPath();ctx.arc(x+10,y+12,3,0,Math.PI*2);ctx.arc(x+31,y+31,2,0,Math.PI*2);ctx.fill()}if(t==='W'){let wave=(Date.now()/120+gx*8)%28;ctx.fillStyle='rgba(255,255,255,.28)';ctx.fillRect(x+4+wave,y+14,16,4);ctx.fillRect(x+2+((wave+12)%30),y+32,12,3);ctx.fillStyle='rgba(0,82,140,.18)';ctx.fillRect(x,y+TILE-8,TILE,8)}if(t==='T'){ctx.fillStyle='#2e6b3f';ctx.beginPath();ctx.arc(x+24+Math.sin(Date.now()/900+gx)*2,y+20,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='#5b371d';ctx.fillRect(x+20,y+26,8,18);ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(x+17,y+13,5,0,Math.PI*2);ctx.fill()}if(t==='H'){ctx.fillStyle='rgba(255,225,140,.18)';ctx.fillRect(x+6,y+7,34,8);ctx.fillRect(x+8,y+25,32,7)}}
 function drawTinyFlower(x,y,color){ctx.fillStyle=color;for(let a=0;a<Math.PI*2;a+=Math.PI/2){ctx.beginPath();ctx.arc(x+Math.cos(a)*3,y+Math.sin(a)*3,2,0,Math.PI*2);ctx.fill()}ctx.fillStyle='#f7c948';ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill()}
@@ -512,12 +643,12 @@ function showLesson(){E.celebrate.style.display='none';E.lessonTitle.textContent
 function continueFromLesson(){E.lesson.style.display='none';state.message=false;if(state.level<levels.length-1){state.level++;resetLevel();showMessage('New Tier Path',`Welcome to ${lvl().tier} — ${lvl().title}.`)}else{finishRun()}ui()}
 function finishRun(){state.hardMode++;state.level=0;resetLevel();celebrate('Advanced Complete!','You finished the full adventure. Start over on a more advanced setting and replay the same concepts with harder challenges.',[`Hard Mode ${state.hardMode} Unlocked`,'🔁 Start Over','🏆 ADHD Toolkit Complete']);E.badgeRow.innerHTML+=`<button class="good" onclick="restartHard()">Start Over: Hard Mode ${state.hardMode}</button>`}
 function restartHard(){E.celebrate.style.display='none';state.message=false;showMessage('Hard Mode','Same ADHD skills. Less starting energy. More practice. Let’s begin again.')}
-function ui(){const L=lvl();E.tier.textContent=L.tier+(state.hardMode?` · Hard ${state.hardMode}`:'');E.level.textContent=`Level ${state.level+1}: ${L.title}`;E.energy.textContent=`Energy ${state.energy}`;E.stars.textContent=`Stars ${state.stars}`;E.tool.textContent=`Tool: ${state.tools.at(-1)||'none'}`;E.sideTitle.textContent=`${L.tier} Level ${state.level%3+1}: ${L.title}`;E.sideGoal.textContent=L.goal;E.progress.style.width=(state.ready?100:state.step*25)+'%';const quests=['Meet the helper','Complete the practice board','Open the chest','Reach the gate','Gate is ready'];E.questTitle.textContent=state.ready?'Quest: Reach the Gate':`Quest: ${quests[state.step]||quests[0]}`;E.questText.textContent=state.ready?'Walk to the glowing gate and press Space/E.':`${L.goal} Current objective: ${quests[state.step]||quests[0]}.`;E.teachBox.textContent=L.teach;E.tierGrid.innerHTML=tiers.map((t,i)=>`<div class="tier-chip ${i===L.tierIndex?'active':''}">${i+1}. ${t}</div>`).join('');E.tools.innerHTML=state.tools.length?'':'<div class="small">No tools yet. Talk to the first helper.</div>';state.tools.forEach(t=>{let [ic,ttl,desc]=toolInfo[t];E.tools.innerHTML+=`<div class="tool-card"><div class="tool-icon">${ic}</div><div><strong>${ttl}</strong><div class="small">${desc}</div></div></div>`});
+function ui(){const L=lvl();E.tier.textContent=L.tier+(state.hardMode?` · Hard ${state.hardMode}`:'');E.level.textContent=`Level ${state.level+1}: ${L.title}`;E.energy.textContent=`Energy ${state.energy}`;E.stars.textContent=`Stars ${state.stars}`;if(E.coins) E.coins.textContent=`Coins ${state.coins||0}`;E.tool.textContent=`Tool: ${state.tools.at(-1)||'none'}`;E.sideTitle.textContent=`${L.tier} Level ${state.level%3+1}: ${L.title}`;E.sideGoal.textContent=L.goal;E.progress.style.width=(state.ready?100:state.step*25)+'%';const quests=['Meet the helper','Complete the practice board','Open the chest','Reach the gate','Gate is ready'];E.questTitle.textContent=state.ready?'Quest: Reach the Gate':`Quest: ${quests[state.step]||quests[0]}`;E.questText.textContent=state.ready?'Walk to the glowing gate and press Space/E.':`${L.goal} Current objective: ${quests[state.step]||quests[0]}.`;E.teachBox.textContent=L.teach;E.tierGrid.innerHTML=tiers.map((t,i)=>`<div class="tier-chip ${i===L.tierIndex?'active':''}">${i+1}. ${t}</div>`).join('');E.tools.innerHTML=state.tools.length?'':'<div class="small">No tools yet. Talk to the first helper.</div>';state.tools.forEach(t=>{let [ic,ttl,desc]=toolInfo[t];E.tools.innerHTML+=`<div class="tool-card"><div class="tool-icon">${ic}</div><div><strong>${ttl}</strong><div class="small">${desc}</div></div></div>`});
 const next=nextFoxReward();
 E.foxRewards.innerHTML=`<div><strong>🦊 Fox Friendship:</strong> ${state.stars} Stars</div><div class="small">${next?`Next: ${next.icon} ${next.name} at ${next.stars} stars (${Math.max(0,next.stars-state.stars)} to go).`:'All fox upgrades unlocked!'}</div><div class="fox-reward-list">`+foxRewardMilestones.map(r=>`<div class="fox-reward-row ${state.stars>=r.stars?'unlocked':''}"><div class="fox-reward-icon">${state.stars>=r.stars?r.icon:'🔒'}</div><div><strong>${r.stars}⭐ ${r.name}</strong><span>${state.stars>=r.stars?'Unlocked':r.desc}</span></div></div>`).join('')+`</div>`;
 }
 function loop(){update();draw();ui();requestAnimationFrame(loop)}
-window.addEventListener('keydown',e=>{state.keys[e.key]=true;state.keys[e.key.toLowerCase()]=true;if([' ','e','E'].includes(e.key)){e.preventDefault();interact()}if(['j','J','Shift'].includes(e.key)){e.preventDefault();jump()}if(['f','F'].includes(e.key)){e.preventDefault();askFox()}if(['b','B'].includes(e.key))openBreathing()});window.addEventListener('keyup',e=>{state.keys[e.key]=false;state.keys[e.key.toLowerCase()]=false});const mobileDirs={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'};let activeMobileKeys=new Set();function setMobileKey(k,on,btn){state.mobileMoving=on||activeMobileKeys.size>0;if(on){activeMobileKeys.add(k);state.keys[k]=true;btn&&btn.classList.add('active')}else{activeMobileKeys.delete(k);state.keys[k]=false;btn&&btn.classList.remove('active')}state.mobileMoving=activeMobileKeys.size>0}function clearMobileKeys(){document.querySelectorAll('[data-dir]').forEach(btn=>btn.classList.remove('active'));activeMobileKeys.forEach(k=>state.keys[k]=false);activeMobileKeys.clear();state.mobileMoving=false}document.querySelectorAll('[data-dir]').forEach(b=>{const k=mobileDirs[b.dataset.dir];b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);setMobileKey(k,true,b)});b.addEventListener('pointerup',e=>{e.preventDefault();setMobileKey(k,false,b)});b.addEventListener('pointercancel',e=>{e.preventDefault();setMobileKey(k,false,b)});});window.addEventListener('pointerup',e=>{if(!e.target.closest('.mobile-pad')) clearMobileKeys()});window.addEventListener('blur',clearMobileKeys);document.querySelector('[data-action="interact"]').addEventListener('click',interact);const jumpBtn=document.querySelector('[data-action="jump"]');jumpBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();jump()});jumpBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});document.querySelector('[data-action="fox"]').addEventListener('click',askFox);document.querySelector('[data-action="breathe"]').addEventListener('click',openBreathing);const audioBar=document.getElementById('audioBar'),audioToggle=document.getElementById('audioToggle');let audioCollapseTimer=null;function openAudioPanel(){audioBar.classList.remove('collapsed');audioToggle.textContent='✕';clearTimeout(audioCollapseTimer);audioCollapseTimer=setTimeout(()=>{audioBar.classList.add('collapsed');audioToggle.textContent='🎵'},4500)}function closeAudioPanel(){audioBar.classList.add('collapsed');audioToggle.textContent='🎵';clearTimeout(audioCollapseTimer)}audioToggle.addEventListener('click',()=>audioBar.classList.contains('collapsed')?openAudioPanel():closeAudioPanel());document.getElementById('musicBtn').addEventListener('click',()=>{openAudioPanel();AudioGame.toggle()});document.getElementById('sfxBtn').addEventListener('click',()=>{openAudioPanel();AudioGame.test()});
+window.addEventListener('keydown',e=>{state.keys[e.key]=true;state.keys[e.key.toLowerCase()]=true;if([' ','e','E'].includes(e.key)){e.preventDefault();interact()}if(['j','J','Shift'].includes(e.key)){e.preventDefault();jump()}if(['f','F'].includes(e.key)){e.preventDefault();askFox()}if(['k','K'].includes(e.key)){e.preventDefault();slashFocusBlade()}if(['b','B'].includes(e.key))openBreathing()});window.addEventListener('keyup',e=>{state.keys[e.key]=false;state.keys[e.key.toLowerCase()]=false});const mobileDirs={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'};let activeMobileKeys=new Set();function setMobileKey(k,on,btn){state.mobileMoving=on||activeMobileKeys.size>0;if(on){activeMobileKeys.add(k);state.keys[k]=true;btn&&btn.classList.add('active')}else{activeMobileKeys.delete(k);state.keys[k]=false;btn&&btn.classList.remove('active')}state.mobileMoving=activeMobileKeys.size>0}function clearMobileKeys(){document.querySelectorAll('[data-dir]').forEach(btn=>btn.classList.remove('active'));activeMobileKeys.forEach(k=>state.keys[k]=false);activeMobileKeys.clear();state.mobileMoving=false}document.querySelectorAll('[data-dir]').forEach(b=>{const k=mobileDirs[b.dataset.dir];b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);setMobileKey(k,true,b)});b.addEventListener('pointerup',e=>{e.preventDefault();setMobileKey(k,false,b)});b.addEventListener('pointercancel',e=>{e.preventDefault();setMobileKey(k,false,b)});});window.addEventListener('pointerup',e=>{if(!e.target.closest('.mobile-pad')) clearMobileKeys()});window.addEventListener('blur',clearMobileKeys);document.querySelector('[data-action="interact"]').addEventListener('click',interact);const jumpBtn=document.querySelector('[data-action="jump"]');jumpBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();jump()});jumpBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});document.querySelector('[data-action="fox"]').addEventListener('click',askFox);document.querySelector('[data-action="breathe"]').addEventListener('click',openBreathing);const slashBtn=document.querySelector('[data-action="slash"]');if(slashBtn){slashBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();slashFocusBlade()});slashBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});}const audioBar=document.getElementById('audioBar'),audioToggle=document.getElementById('audioToggle');let audioCollapseTimer=null;function openAudioPanel(){audioBar.classList.remove('collapsed');audioToggle.textContent='✕';clearTimeout(audioCollapseTimer);audioCollapseTimer=setTimeout(()=>{audioBar.classList.add('collapsed');audioToggle.textContent='🎵'},4500)}function closeAudioPanel(){audioBar.classList.add('collapsed');audioToggle.textContent='🎵';clearTimeout(audioCollapseTimer)}audioToggle.addEventListener('click',()=>audioBar.classList.contains('collapsed')?openAudioPanel():closeAudioPanel());document.getElementById('musicBtn').addEventListener('click',()=>{openAudioPanel();AudioGame.toggle()});document.getElementById('sfxBtn').addEventListener('click',()=>{openAudioPanel();AudioGame.test()});
 
 // --- Sprite Sheet Integration v1 ---
 // Uses a cleaned transparent atlas generated from the concept sheet. If the image is not ready,
@@ -527,46 +658,10 @@ const originalDrawFidgetFox = drawFidgetFoxFallback;
 const SpriteAtlas = {
   img: new Image(),
   ready: false,
-  frames: {
-    // PLAYER ROW 0
-    player_down_idle: { x: 0, y: 0, w: 96, h: 96 },
-    player_down1: { x: 96, y: 0, w: 96, h: 96 },
-    player_down2: { x: 192, y: 0, w: 96, h: 96 },
-    player_up1: { x: 288, y: 0, w: 96, h: 96 },
-    player_up2: { x: 384, y: 0, w: 96, h: 96 },
-    player_left1: { x: 480, y: 0, w: 96, h: 96 },
-    player_left2: { x: 576, y: 0, w: 96, h: 96 },
-    player_right1: { x: 672, y: 0, w: 96, h: 96 },
-  
-    // PLAYER ROW 1
-    player_right2: { x: 0, y: 96, w: 96, h: 96 },
-    player_jump: { x: 96, y: 96, w: 96, h: 96 },
-    player_land: { x: 192, y: 96, w: 96, h: 96 },
-    player_celebrate: { x: 288, y: 96, w: 96, h: 96 },
-    player_think: { x: 384, y: 96, w: 96, h: 96 },
-    player_sit: { x: 480, y: 96, w: 96, h: 96 },
-  
-    // FOX ROW 2
-    fox_idle1: { x: 0, y: 192, w: 96, h: 96 },
-    fox_idle2: { x: 96, y: 192, w: 96, h: 96 },
-    fox_walk1: { x: 192, y: 192, w: 96, h: 96 },
-    fox_walk2: { x: 384, y: 192, w: 96, h: 96 },
-    fox_happy: { x: 480, y: 192, w: 96, h: 96 },
-    fox_celebrate: { x: 576, y: 192, w: 96, h: 96 },
-    fox_talk: { x: 672, y: 192, w: 96, h: 96 },
-    // FOX ROW 3
-    fox_sit1: { x: 0, y: 288, w: 96, h: 96 },
-    fox_sit2: { x: 96, y: 288, w: 96, h: 96 },
-    fox_sleep1: { x: 192, y: 288, w: 96, h: 96 },
-    fox_sleep2: { x: 288, y: 288, w: 96, h: 96 },
-    fox_sleep3: { x: 384, y: 288, w: 96, h: 96 },
-    fox_idea: { x: 480, y: 288, w: 96, h: 96 },
-    fox_nap: { x: 576, y: 288, w: 96, h: 96 },
-    fox_excited: { x: 672, y: 288, w: 96, h: 96 }
-  }
+  frames: {"player_down1": {"x": 0, "y": 0, "w": 96, "h": 96}, "player_down2": {"x": 96, "y": 0, "w": 96, "h": 96}, "player_right1": {"x": 192, "y": 0, "w": 96, "h": 96}, "player_up1": {"x": 288, "y": 0, "w": 96, "h": 96}, "player_left1": {"x": 384, "y": 0, "w": 96, "h": 96}, "player_down_idle": {"x": 480, "y": 0, "w": 96, "h": 96}, "player_right2": {"x": 576, "y": 0, "w": 96, "h": 96}, "player_up2": {"x": 672, "y": 0, "w": 96, "h": 96}, "player_left2": {"x": 0, "y": 96, "w": 96, "h": 96}, "player_walk1": {"x": 96, "y": 96, "w": 96, "h": 96}, "player_walk2": {"x": 192, "y": 96, "w": 96, "h": 96}, "player_jump": {"x": 288, "y": 96, "w": 96, "h": 96}, "player_backpack1": {"x": 384, "y": 96, "w": 96, "h": 96}, "player_backpack2": {"x": 480, "y": 96, "w": 96, "h": 96}, "player_backpack3": {"x": 576, "y": 96, "w": 96, "h": 96}, "player_sit": {"x": 672, "y": 96, "w": 96, "h": 96}, "fox_idle1": {"x": 0, "y": 192, "w": 96, "h": 96}, "fox_idle2": {"x": 96, "y": 192, "w": 96, "h": 96}, "fox_walk1": {"x": 192, "y": 192, "w": 96, "h": 96}, "fox_walk2": {"x": 384, "y": 192, "w": 96, "h": 96}, "fox_happy": {"x": 384, "y": 192, "w": 96, "h": 96}, "fox_sit1": {"x": 480, "y": 192, "w": 96, "h": 96}, "fox_sit2": {"x": 576, "y": 192, "w": 96, "h": 96}, "fox_thinking": {"x": 672, "y": 192, "w": 96, "h": 96}, "fox_sleep1": {"x": 0, "y": 288, "w": 96, "h": 96}, "fox_sleep2": {"x": 96, "y": 288, "w": 96, "h": 96}, "fox_idea": {"x": 192, "y": 288, "w": 96, "h": 96}, "fox_talk": {"x": 288, "y": 288, "w": 96, "h": 96}, "fox_celebrate": {"x": 384, "y": 288, "w": 96, "h": 96}, "fox_nap": {"x": 480, "y": 288, "w": 96, "h": 96}, "fox_sleep3": {"x": 576, "y": 288, "w": 96, "h": 96}}
 };
 SpriteAtlas.img.onload = () => { SpriteAtlas.ready = true; console.log('Focus Quest sprite atlas loaded:', SpriteAtlas.img.naturalWidth + 'x' + SpriteAtlas.img.naturalHeight); };
-SpriteAtlas.img.onerror = () => { console.error('Focus Quest sprite atlas failed to load. Check assets/sprites/focus_quest_sprite_atlas_v1.png'); };
+SpriteAtlas.img.onerror = () => { console.error('Focus Quest sprite atlas failed to load. Check assets/sprites/focus_quest_production_sprite_atlas_v7_96_aligned.png'); };
 SpriteAtlas.img.src = './assets/sprites/focus_quest_production_sprite_atlas_v7_96_aligned.png';
 
 function drawAtlasFrame(name, dx, dy, dw, dh, flip=false){
@@ -600,55 +695,26 @@ function currentPlayerSpriteFrame(){
 }
 
 function drawPlayer(){
-    if(!SpriteAtlas.ready) return originalDrawPlayer();
-  
-    const x = player.x;
-    const y = player.y - player.z;
-    const squash = player.landingSquash > 0 ? player.landingSquash / 10 : 0;
-    const mobileScale = window.innerWidth <= 930 ? 1.9 : 1;
-  
-    const sw = (48 + squash * 3) * mobileScale;
-    const sh = (58 - squash * 2) * mobileScale;
-  
-    const bob = player.moving && !player.jumping
-      ? Math.sin(player.walkFrame * .42) * 1.5
-      : 0;
-  
-    ctx.fillStyle = 'rgba(0,0,0,.25)';
+  if(!SpriteAtlas.ready) return originalDrawPlayer();
+  const x = player.x;
+  const y = player.y - player.z;
+  const squash = player.landingSquash>0 ? player.landingSquash/10 : 0;
+  const sw = 48 + squash*3;
+  const sh = 58 - squash*2;
+  const bob = player.moving && !player.jumping ? Math.sin(player.walkFrame*.42)*1.5 : 0;
+  ctx.fillStyle='rgba(0,0,0,.25)';
+  ctx.beginPath();
+  ctx.ellipse(player.x+17, player.y+39, Math.max(10,18-player.z*.15), Math.max(3,7-player.z*.06), 0, 0, Math.PI*2);
+  ctx.fill();
+  if(player.jumping){
+    ctx.strokeStyle='rgba(255,246,191,.65)';
+    ctx.lineWidth=2;
     ctx.beginPath();
-    ctx.ellipse(
-      player.x + 17,
-      player.y + 39,
-      Math.max(10, 18 - player.z * .15),
-      Math.max(3, 7 - player.z * .06),
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-  
-    if(player.jumping){
-      ctx.strokeStyle = 'rgba(255,246,191,.65)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(
-        x + 17,
-        y + 26,
-        25 + Math.sin(Date.now() / 90) * 3,
-        0,
-        Math.PI * 2
-      );
-      ctx.stroke();
-    }
-  
-    drawAtlasFrame(
-      currentPlayerSpriteFrame(),
-      x + 17 - sw / 2,
-      y + 18 - sh / 2 + bob + squash,
-      sw,
-      sh
-    );
+    ctx.arc(x+17,y+26,25+Math.sin(Date.now()/90)*3,0,Math.PI*2);
+    ctx.stroke();
   }
+  drawAtlasFrame(currentPlayerSpriteFrame(), x-7-(sw-48)/2, y-12+bob+squash, sw, sh);
+}
 
 function currentFoxSpriteFrame(){
   if(fox.bubbleTimer>0) return Math.floor(Date.now()/300)%2===0?'fox_talk':'fox_idle1';
@@ -657,167 +723,28 @@ function currentFoxSpriteFrame(){
 }
 
 function drawFidgetFox(){
-    if(!state.started) return;
-    if(!SpriteAtlas.ready) return originalDrawFidgetFox();
-  
-    const mobileScale = window.innerWidth <= 930 ? 1.35 : 1;
-  
-    const bob = Math.sin(Date.now() / 260) * 2;
-    const x = fox.x;
-    const y = fox.y + bob;
-  
-    const fw = 64 * mobileScale;
-    const fh = 56 * mobileScale;
-  
-    const drawX = x + 18 - fw / 2;
-    const drawY = y + 10 - fh / 2;
-  
-    ctx.save();
-  
-    ctx.fillStyle = 'rgba(0,0,0,.22)';
-    ctx.beginPath();
-    ctx.ellipse(
-      x + 18,
-      y + 31,
-      18 * mobileScale,
-      6 * mobileScale,
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-  
-    drawAtlasFrame(
-      currentFoxSpriteFrame(),
-      drawX,
-      drawY,
-      fw,
-      fh
-    );
-  
-    // Reward accessories stay aligned with the scaled fox
-    if(foxHas('bandana')){
-      ctx.fillStyle = '#ef476f';
-      ctx.beginPath();
-      ctx.moveTo(x + 10 * mobileScale, y + 17 * mobileScale);
-      ctx.lineTo(x + 32 * mobileScale, y + 17 * mobileScale);
-      ctx.lineTo(x + 22 * mobileScale, y + 25 * mobileScale);
-      ctx.fill();
-    }
-  
-    if(foxHas('backpack')){
-      ctx.fillStyle = '#7b4f2a';
-      round(
-        x + 2 * mobileScale,
-        y + 16 * mobileScale,
-        12 * mobileScale,
-        14 * mobileScale,
-        3 * mobileScale
-      );
-      ctx.fill();
-      ctx.strokeStyle = '#f7c948';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-  
-    if(foxHas('lantern')){
-      ctx.save();
-      ctx.globalAlpha = .45 + .2 * Math.sin(Date.now() / 220);
-      ctx.fillStyle = '#fff6bf';
-      ctx.beginPath();
-      ctx.arc(
-        x + 38 * mobileScale,
-        y + 28 * mobileScale,
-        25 * mobileScale,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-      ctx.restore();
-  
-      ctx.fillStyle = '#f7c948';
-      round(
-        x + 34 * mobileScale,
-        y + 19 * mobileScale,
-        8 * mobileScale,
-        12 * mobileScale,
-        3 * mobileScale
-      );
-      ctx.fill();
-      ctx.strokeStyle = '#17202a';
-      ctx.stroke();
-    }
-  
-    if(foxHas('radar')){
-      ctx.save();
-      ctx.globalAlpha = .28 + .15 * Math.sin(Date.now() / 180);
-      ctx.strokeStyle = '#06d6a0';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(
-        x + 20 * mobileScale,
-        y + 8 * mobileScale,
-        (24 + Math.sin(Date.now() / 180) * 4) * mobileScale,
-        0,
-        Math.PI * 2
-      );
-      ctx.stroke();
-      ctx.restore();
-    }
-  
-    if(foxHas('golden')){
-      ctx.save();
-      ctx.globalAlpha = .95;
-      ctx.globalCompositeOperation = 'screen';
-      ctx.fillStyle = 'rgba(247,201,72,.18)';
-      ctx.beginPath();
-      ctx.arc(
-        x + 20 * mobileScale,
-        y + 8 * mobileScale,
-        38 * mobileScale,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-      ctx.restore();
-  
-      drawStarShape(
-        x + 40 * mobileScale,
-        y - 7 * mobileScale,
-        5 * mobileScale,
-        '#fff6bf',
-        '#f7c948'
-      );
-  
-      drawStarShape(
-        x + 1 * mobileScale,
-        y - 4 * mobileScale,
-        4 * mobileScale,
-        '#fff6bf',
-        '#f7c948'
-      );
-    }
-  
-    if(fox.bubbleTimer > 0){
-      const bx = Math.min(Math.max(x - 24, 110), 760);
-      const by = Math.max(42, y - 58);
-  
-      ctx.globalAlpha = Math.min(1, fox.bubbleTimer / 25);
-      ctx.fillStyle = 'rgba(255,255,255,.96)';
-      round(bx, by, 190, 42, 12);
-      ctx.fill();
-  
-      ctx.strokeStyle = 'rgba(23,32,42,.3)';
-      ctx.stroke();
-  
-      ctx.fillStyle = '#17202a';
-      ctx.font = '900 11px system-ui';
-      ctx.textAlign = 'left';
-  
-      wrapText(fox.tip, bx + 10, by + 16, 170, 13);
-    }
-  
-    ctx.restore();
+  if(!state.started) return;
+  if(!SpriteAtlas.ready) return originalDrawFidgetFox();
+  const bob=Math.sin(Date.now()/260)*2;
+  const x=fox.x, y=fox.y+bob;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.22)';
+  ctx.beginPath();ctx.ellipse(x+18,y+31,18,6,0,0,Math.PI*2);ctx.fill();
+  drawAtlasFrame(currentFoxSpriteFrame(), x-15, y-18, 64, 56);
+  // Keep reward accessories as overlay layers so the star reward system still matters.
+  if(foxHas('bandana')){ctx.fillStyle='#ef476f';ctx.beginPath();ctx.moveTo(x+10,y+17);ctx.lineTo(x+32,y+17);ctx.lineTo(x+22,y+25);ctx.fill();}
+  if(foxHas('backpack')){ctx.fillStyle='#7b4f2a';round(x+2,y+16,12,14,3);ctx.fill();ctx.strokeStyle='#f7c948';ctx.lineWidth=1.5;ctx.stroke();}
+  if(foxHas('lantern')){ctx.save();ctx.globalAlpha=.45+.2*Math.sin(Date.now()/220);ctx.fillStyle='#fff6bf';ctx.beginPath();ctx.arc(x+38,y+28,25,0,Math.PI*2);ctx.fill();ctx.restore();ctx.fillStyle='#f7c948';round(x+34,y+19,8,12,3);ctx.fill();ctx.strokeStyle='#17202a';ctx.stroke();}
+  if(foxHas('radar')){ctx.save();ctx.globalAlpha=.28+.15*Math.sin(Date.now()/180);ctx.strokeStyle='#06d6a0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+20,y+8,24+Math.sin(Date.now()/180)*4,0,Math.PI*2);ctx.stroke();ctx.restore();}
+  if(foxHas('golden')){ctx.save();ctx.globalAlpha=.95;ctx.globalCompositeOperation='screen';ctx.fillStyle='rgba(247,201,72,.18)';ctx.beginPath();ctx.arc(x+20,y+8,38,0,Math.PI*2);ctx.fill();ctx.restore();drawStarShape(x+40,y-7,5,'#fff6bf','#f7c948');drawStarShape(x+1,y-4,4,'#fff6bf','#f7c948');}
+  if(fox.bubbleTimer>0){
+    const bx=Math.min(Math.max(x-24,110),760), by=Math.max(42,y-58);
+    ctx.globalAlpha=Math.min(1,fox.bubbleTimer/25);
+    ctx.fillStyle='rgba(255,255,255,.96)';round(bx,by,190,42,12);ctx.fill();
+    ctx.strokeStyle='rgba(23,32,42,.3)';ctx.stroke();
+    ctx.fillStyle='#17202a';ctx.font='900 11px system-ui';ctx.textAlign='left';wrapText(fox.tip,bx+10,by+16,170,13);
   }
+  ctx.restore();
+}
 
 ui();loop();

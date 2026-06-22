@@ -14,7 +14,7 @@ const AudioGame=(()=>{
     if(ctx) return;
     ctx=new (window.AudioContext||window.webkitAudioContext)();
     master=ctx.createGain(); master.gain.value=0.34; master.connect(ctx.destination);
-    musicGain=ctx.createGain(); musicGain.gain.value=0.22; musicGain.connect(master);
+    musicGain=ctx.createGain(); musicGain.gain.value=2; musicGain.connect(master);
     sfxGain=ctx.createGain(); sfxGain.gain.value=0.55; sfxGain.connect(master);
   }
   async function unlock(){ setup(); if(ctx.state==='suspended') await ctx.resume(); }
@@ -123,8 +123,8 @@ const foxRewardMilestones=[
   {stars:5,key:'bandana',name:'Red Bandana',icon:'❤️',desc:'Fidget Fox wears a brave red bandana.'},
   {stars:10,key:'backpack',name:'Explorer Backpack',icon:'🎒',desc:'Fox carries your ADHD tools with pride.'},
   {stars:20,key:'lantern',name:'Lantern',icon:'🏮',desc:'Fox glows with a calming helper light.'},
-  {stars:50,key:'radar',name:'Treasure Radar',icon:'📡',desc:'Fox can sense hidden shiny things nearby.'},
-  {stars:100,key:'golden',name:'Golden Fox',icon:'✨',desc:'Fox becomes a golden mastery companion.'}
+  {stars:35,key:'radar',name:'Treasure Radar',icon:'📡',desc:'Fox can sense hidden shiny things nearby.'},
+  {stars:50,key:'golden',name:'Golden Fox',icon:'✨',desc:'Fox becomes a golden mastery companion.'}
 ];
 function foxHas(key){return state.foxUnlocks.some(s=>foxRewardMilestones.find(r=>r.stars===s)?.key===key)}
 function nextFoxReward(){return foxRewardMilestones.find(r=>state.stars<r.stars)}

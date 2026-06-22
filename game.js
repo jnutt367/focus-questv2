@@ -64,7 +64,7 @@ const AudioGame=(()=>{
 
 const toolInfo={
 'Pause Power':['🫧','Pause Power','Breathe before reacting.'],
-'Tiny Step Torch':['🔦','Tiny Step Torch','Shrink a big task into one tiny action.'],
+'Tiny Step Torch':['🔦','Tiny Step Torch','Shrink a big task into several tiny actions.'],
 'Return Bell':['🔔','Return Bell','Notice distraction, then gently return.'],
 'Plan Map':['🗺️','Plan Map','Choose a next step before starting.'],
 'Time Gem':['⏳','Time Gem','Use short timers and breaks.'],

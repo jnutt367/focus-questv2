@@ -276,27 +276,161 @@ function drawDrops(){
 
 function drawSlash(){
   if(!state.slashing || state.slashTimer <= 0) return;
+
   const t = state.slashTimer;
   const alpha = t / 14;
-  let sx = player.x + 17;
-  let sy = player.y + 22;
+
+  let handX;
+  let handY;
+  let angle;
+
+  if(player.dir === 'up'){
+    handX = player.x + 17;
+    handY = player.y + 8;
+    angle = -Math.PI / 2;
+  } 
+  else if(player.dir === 'left'){
+    handX = player.x + 6;
+    handY = player.y + 22;
+    angle = Math.PI;
+  } 
+  else if(player.dir === 'right'){
+    handX = player.x + 28;
+    handY = player.y + 22;
+    angle = 0;
+  } 
+  else {
+    handX = player.x + 17;
+    handY = player.y + 36;
+    angle = Math.PI / 2;
+  }
+
+  const swordLength = 56;
+  const bladeStart = 10;
+  const trailSwing = 0.16;
+
+  const bladeBaseX = handX + Math.cos(angle) * bladeStart;
+  const bladeBaseY = handY + Math.sin(angle) * bladeStart;
+
+  const tipX = handX + Math.cos(angle) * swordLength;
+  const tipY = handY + Math.sin(angle) * swordLength;
+
+  const start = angle - trailSwing;
+  const end = angle + trailSwing;
+
+  const guardSize = 18;
+  const handleLength = 14;
+  const perp = angle + Math.PI / 2;
+
+  const guardX1 = handX + Math.cos(perp) * guardSize;
+  const guardY1 = handY + Math.sin(perp) * guardSize;
+  const guardX2 = handX - Math.cos(perp) * guardSize;
+  const guardY2 = handY - Math.sin(perp) * guardSize;
+
+  const handleX = handX - Math.cos(angle) * handleLength;
+  const handleY = handY - Math.sin(angle) * handleLength;
 
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.strokeStyle = '#fff6bf';
-  ctx.lineWidth = 7;
   ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Small glow trail near sword tip
+  ctx.shadowColor = '#7df9ff';
+  ctx.shadowBlur = 12;
+  ctx.strokeStyle = 'rgba(125, 249, 255, 0.22)';
+  ctx.lineWidth = 6;
   ctx.beginPath();
-  if(player.dir === 'up') ctx.arc(sx, sy - 34, 28, Math.PI * 1.1, Math.PI * 1.9);
-  else if(player.dir === 'left') ctx.arc(sx - 34, sy, 28, Math.PI * .6, Math.PI * 1.4);
-  else if(player.dir === 'right') ctx.arc(sx + 34, sy, 28, -Math.PI * .4, Math.PI * .4);
-  else ctx.arc(sx, sy + 34, 28, Math.PI * .1, Math.PI * .9);
+  ctx.arc(handX, handY, swordLength, start, end);
   ctx.stroke();
+
+  // Handle, drawn first but outside player body
+  ctx.shadowColor = '#241105';
+  ctx.shadowBlur = 3;
+  ctx.strokeStyle = '#4b2a12';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(handX, handY);
+  ctx.lineTo(handleX, handleY);
+  ctx.stroke();
+
+  // Brown handle wrap
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#9b5a24';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(handX, handY);
+  ctx.lineTo(handleX, handleY);
+  ctx.stroke();
+
+  // Big golden crossguard
+  ctx.shadowColor = '#ffd966';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#b87919';
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.moveTo(guardX1, guardY1);
+  ctx.lineTo(guardX2, guardY2);
+  ctx.stroke();
+
+  // Bright crossguard center
+  ctx.shadowBlur = 4;
+  ctx.strokeStyle = '#fff1a8';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(guardX1, guardY1);
+  ctx.lineTo(guardX2, guardY2);
+  ctx.stroke();
+
+  // Wide golden broadsword blade starts after the hilt
+  ctx.shadowColor = '#9eff8f';
+  ctx.shadowBlur = 20;
+  ctx.strokeStyle = '#ffe8a3';
+  ctx.lineWidth = 12;
+  ctx.beginPath();
+  ctx.moveTo(bladeBaseX, bladeBaseY);
+  ctx.lineTo(tipX, tipY);
+  ctx.stroke();
+
+  // Bright blade core
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(bladeBaseX, bladeBaseY);
+  ctx.lineTo(tipX, tipY);
+  ctx.stroke();
+
+  // Hilt gem
+  ctx.fillStyle = '#66fff2';
+  ctx.shadowColor = '#66fff2';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(handX, handY, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pommel at end of handle
+  ctx.fillStyle = '#ffd966';
+  ctx.shadowColor = '#ffd966';
+  ctx.shadowBlur = 7;
+  ctx.beginPath();
+  ctx.arc(handleX, handleY, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Glowing sword tip
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.arc(tipX, tipY, 4, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.restore();
+
   state.slashTimer--;
   if(state.slashTimer <= 0) state.slashing = false;
 }
-
 function draw(){const L=lvl();updateCamera();drawSky(L);ctx.save();ctx.translate(-camera.x,-camera.y);for(let y=0;y<L.map.length;y++)for(let x=0;x<L.map[y].length;x++)drawTile(L.map[y][x],x*TILE,y*TILE,x,y,L);drawScenery(L);drawForestExpansionDecor();drawBushes();drawDrops();drawSlash();drawCharacter(15*TILE,5*TILE,'#06d6a0',L.npc);drawChest(16*TILE,8*TILE);drawBoard(4*TILE,4*TILE);drawGate(16*TILE,10*TILE);drawFidgetFox();drawPlayer();drawParticles();ctx.restore();drawFlyingStars();drawVignette()}
 function drawSky(L){ctx.fillStyle=L.bg;ctx.fillRect(0,0,960,600);ctx.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<18;i++){ctx.beginPath();ctx.arc((i*91+Date.now()/80)%980,40+(i%4)*28,16+i%3*4,0,Math.PI*2);ctx.fill()}}
 function drawTile(t,x,y,gx,gy,L){let c=t==='T'?'#21452f':t==='P'?'#d9b46f':t==='W'?'#3fa9f5':t==='M'?'#4b5563':t==='H'?'#8b5e34':'#7fc96d';ctx.fillStyle=c;ctx.fillRect(x,y,TILE,TILE);ctx.strokeStyle='rgba(0,0,0,.06)';ctx.strokeRect(x,y,TILE,TILE);if(t==='G'){ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(x+8,y+8,5,5);ctx.fillRect(x+30,y+27,4,4);if((gx+gy)%5===0){drawTinyFlower(x+33,y+10,'#fff6bf')}if((gx*2+gy)%7===0){drawTinyFlower(x+11,y+33,'#ef476f')}}if(t==='P'){ctx.fillStyle='rgba(90,54,22,.18)';ctx.beginPath();ctx.arc(x+10,y+12,3,0,Math.PI*2);ctx.arc(x+31,y+31,2,0,Math.PI*2);ctx.fill()}if(t==='W'){let wave=(Date.now()/120+gx*8)%28;ctx.fillStyle='rgba(255,255,255,.28)';ctx.fillRect(x+4+wave,y+14,16,4);ctx.fillRect(x+2+((wave+12)%30),y+32,12,3);ctx.fillStyle='rgba(0,82,140,.18)';ctx.fillRect(x,y+TILE-8,TILE,8)}if(t==='T'){ctx.fillStyle='#2e6b3f';ctx.beginPath();ctx.arc(x+24+Math.sin(Date.now()/900+gx)*2,y+20,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='#5b371d';ctx.fillRect(x+20,y+26,8,18);ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(x+17,y+13,5,0,Math.PI*2);ctx.fill()}if(t==='H'){ctx.fillStyle='rgba(255,225,140,.18)';ctx.fillRect(x+6,y+7,34,8);ctx.fillRect(x+8,y+25,32,7)}}

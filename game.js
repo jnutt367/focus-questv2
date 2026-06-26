@@ -113,7 +113,7 @@ const levelThemes=[
 ];
 function makeLevels(){let arr=[];tiers.forEach((tier,ti)=>{for(let i=0;i<3;i++){const th=levelThemes[(ti*3+i)%levelThemes.length];arr.push({...th,tier,tierIndex:ti,difficulty:ti+1,index:arr.length,map:baseMaps[(ti+i)%baseMaps.length],bg:['#69b96b','#5fa9d8','#9b7bd7','#d86f5f'][ti],start:(ti===0&&i===0?[2,14]:[2+i,9-i]),badge:`${tier} Badge ${i+1}`})}});return arr}
 const levels=makeLevels();
-let state={started:false,level:0,keys:{},step:0,energy:5,stars:0,tools:[],met:false,chest:false,challenge:false,ready:false,message:false,hardMode:0,completed:false,foxUnlocks:[],forestSecrets:{grove:false,crystal:false,path:false},coins:0,hasFocusBlade:false,bushes:[],drops:[],slashing:false,slashTimer:0};
+let state={started:false,level:0,keys:{},step:0,energy:5,stars:0,tools:[],met:false,chest:false,challenge:false,ready:false,message:false,hardMode:0,completed:false,foxUnlocks:[],forestSecrets:{grove:false,crystal:false,path:false},coins:0,hasFocusBlade:false,bushes:[],drops:[],slashing:false,slashTimer:0,platformMode:false,platformZone:null,platformReturn:null,platformPrize:false,treehouseCoinsCollected:0,treehouseCoinsTotal:0};
 let player={x:120,y:430,w:34,h:42,spd:3,color:'#2f80ed',z:0,vz:0,jumping:false,dir:'down',moving:false,walkFrame:0,walkDust:0,landingSquash:0,jumpCooldown:0};
 let camera={x:0,y:0};
 let fox={x:80,y:450,w:34,h:24,bubbleTimer:0,tip:'I’m Fidget Fox. I’ll help you remember the skill.',mood:'ready'};
@@ -158,8 +158,8 @@ function foxRewardMessage(r){
 let particles=[];
 let flyingStars=[];
 function lvl(){return levels[state.level]}
-function startGame(){document.body.classList.add('game-active');AudioGame.unlock();AudioGame.sfx('start');by('start').style.display='none';state.started=true;resetLevel();state.hasFocusBlade=true;setupBushes();foxSpeak('start');showMessage('Inner Coach',`Welcome to ${lvl().title}. Talk to ${lvl().npc}, complete the practice challenge, open the chest, then reach the gate.`)}
-function resetLevel(){let [sx,sy]=lvl().start;[sx,sy]=findSafeStart(sx,sy);player.x=sx*TILE;player.y=sy*TILE;state.step=0;state.met=false;state.chest=false;state.challenge=false;state.ready=false;state.energy=Math.max(2,5-state.hardMode);player.z=0;player.vz=0;player.jumping=false;player.moving=false;player.walkFrame=0;player.walkDust=0;player.landingSquash=0;player.jumpCooldown=0;fox.x=player.x-42;fox.y=player.y+12;fox.bubbleTimer=0;particles=[];flyingStars=[];setupBushes();}
+function startGame(){document.body.classList.add('game-active');AudioGame.unlock();AudioGame.sfx('start');by('start').style.display='none';state.started=true;resetLevel();state.hasFocusBlade=false;setupBushes();foxSay('First mission: find the Treehouse Climb. Press E/Space near the CLIMB door. Collect every Focus Coin inside and the prize will be your Focus Blade!',true);showMessage('Inner Coach',`Welcome to ${lvl().title}. Talk to ${lvl().npc}, complete the practice challenge, open the chest, then reach the gate. Fox also has a special Treehouse Climb challenge where you can earn the Focus Blade.`)}
+function resetLevel(){let [sx,sy]=lvl().start;[sx,sy]=findSafeStart(sx,sy);player.x=sx*TILE;player.y=sy*TILE;state.step=0;state.met=false;state.chest=false;state.challenge=false;state.ready=false;state.energy=Math.max(2,5-state.hardMode);player.z=0;player.vz=0;player.jumping=false;player.moving=false;player.walkFrame=0;player.walkDust=0;player.landingSquash=0;player.jumpCooldown=0;fox.x=player.x-42;fox.y=player.y+12;fox.bubbleTimer=0;particles=[];flyingStars=[];state.platformMode=false;state.platformZone=null;state.platformReturn=null;setupBushes();}
 function updateCamera(){
   const L=lvl();
   const mapW=L.map[0].length*TILE, mapH=L.map.length*TILE;
@@ -193,7 +193,7 @@ function setupBushes(){
 function slashFocusBlade(){
   if(!state.started || state.message) return;
   if(!state.hasFocusBlade){
-    showMessage('Fidget Fox','You have not found the Focus Blade yet.');
+    showMessage('Fidget Fox','You have not earned the Focus Blade yet. Find the CLIMB door in Focus Forest, collect every coin, and claim the sword at the top.');
     return;
   }
 
@@ -431,7 +431,7 @@ function drawSlash(){
   state.slashTimer--;
   if(state.slashTimer <= 0) state.slashing = false;
 }
-function draw(){const L=lvl();updateCamera();drawSky(L);ctx.save();ctx.translate(-camera.x,-camera.y);for(let y=0;y<L.map.length;y++)for(let x=0;x<L.map[y].length;x++)drawTile(L.map[y][x],x*TILE,y*TILE,x,y,L);drawScenery(L);drawForestExpansionDecor();drawBushes();drawDrops();drawSlash();drawCharacter(15*TILE,5*TILE,'#06d6a0',L.npc);drawChest(16*TILE,8*TILE);drawBoard(4*TILE,4*TILE);drawGate(16*TILE,10*TILE);drawFidgetFox();drawPlayer();drawParticles();ctx.restore();drawFlyingStars();drawVignette()}
+function draw(){if(state.platformMode){drawPlatformZone();return}const L=lvl();updateCamera();drawSky(L);ctx.save();ctx.translate(-camera.x,-camera.y);for(let y=0;y<L.map.length;y++)for(let x=0;x<L.map[y].length;x++)drawTile(L.map[y][x],x*TILE,y*TILE,x,y,L);drawScenery(L);drawForestExpansionDecor();drawPlatformEntrance();drawBushes();drawDrops();drawSlash();drawCharacter(15*TILE,5*TILE,'#06d6a0',L.npc);drawChest(16*TILE,8*TILE);drawBoard(4*TILE,4*TILE);drawGate(16*TILE,10*TILE);drawFidgetFox();drawPlayer();drawParticles();ctx.restore();drawFlyingStars();drawVignette()}
 function drawSky(L){ctx.fillStyle=L.bg;ctx.fillRect(0,0,960,600);ctx.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<18;i++){ctx.beginPath();ctx.arc((i*91+Date.now()/80)%980,40+(i%4)*28,16+i%3*4,0,Math.PI*2);ctx.fill()}}
 function drawTile(t,x,y,gx,gy,L){let c=t==='T'?'#21452f':t==='P'?'#d9b46f':t==='W'?'#3fa9f5':t==='M'?'#4b5563':t==='H'?'#8b5e34':'#7fc96d';ctx.fillStyle=c;ctx.fillRect(x,y,TILE,TILE);ctx.strokeStyle='rgba(0,0,0,.06)';ctx.strokeRect(x,y,TILE,TILE);if(t==='G'){ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(x+8,y+8,5,5);ctx.fillRect(x+30,y+27,4,4);if((gx+gy)%5===0){drawTinyFlower(x+33,y+10,'#fff6bf')}if((gx*2+gy)%7===0){drawTinyFlower(x+11,y+33,'#ef476f')}}if(t==='P'){ctx.fillStyle='rgba(90,54,22,.18)';ctx.beginPath();ctx.arc(x+10,y+12,3,0,Math.PI*2);ctx.arc(x+31,y+31,2,0,Math.PI*2);ctx.fill()}if(t==='W'){let wave=(Date.now()/120+gx*8)%28;ctx.fillStyle='rgba(255,255,255,.28)';ctx.fillRect(x+4+wave,y+14,16,4);ctx.fillRect(x+2+((wave+12)%30),y+32,12,3);ctx.fillStyle='rgba(0,82,140,.18)';ctx.fillRect(x,y+TILE-8,TILE,8)}if(t==='T'){ctx.fillStyle='#2e6b3f';ctx.beginPath();ctx.arc(x+24+Math.sin(Date.now()/900+gx)*2,y+20,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='#5b371d';ctx.fillRect(x+20,y+26,8,18);ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(x+17,y+13,5,0,Math.PI*2);ctx.fill()}if(t==='H'){ctx.fillStyle='rgba(255,225,140,.18)';ctx.fillRect(x+6,y+7,34,8);ctx.fillRect(x+8,y+25,32,7)}}
 function drawTinyFlower(x,y,color){ctx.fillStyle=color;for(let a=0;a<Math.PI*2;a+=Math.PI/2){ctx.beginPath();ctx.arc(x+Math.cos(a)*3,y+Math.sin(a)*3,2,0,Math.PI*2);ctx.fill()}ctx.fillStyle='#f7c948';ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill()}
@@ -633,6 +633,7 @@ function drawVignette(){const g=ctx.createRadialGradient(480,300,150,480,300,520
 function drawStarShape(cx,cy,r,fill='#f7c948',stroke='#17202a'){ctx.save();ctx.beginPath();for(let i=0;i<10;i++){let a=-Math.PI/2+i*Math.PI/5;let rr=i%2===0?r:r*.45;ctx.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=stroke;ctx.stroke();ctx.restore()}
 function round(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
 function update(){
+  if(state.platformMode){updatePlatformZone();return}
   updateFox();
   if(player.jumpCooldown>0) player.jumpCooldown--;
   if(player.landingSquash>0) player.landingSquash--;
@@ -671,6 +672,7 @@ function update(){
 }
 function jump(){
   AudioGame.unlock();
+  if(state.platformMode){platformJump();return}
   if(!state.started||state.message||player.jumping||player.jumpCooldown>0)return;
   const wasWater=onWater();
   player.jumping=true;
@@ -757,7 +759,7 @@ function checkFocusForestDiscovery(){
     showDiscovery('✨','Crystal Clearing Discovered!','You found a glowing clearing deep in the forest. This is a perfect place for hidden treasure in the next build.','I smell something shiny nearby!');
   }
 }
-function interact(){AudioGame.unlock();AudioGame.sfx('click');if(E.discovery && E.discovery.style.display==='grid'){closeDiscovery();return}if(state.message){hideMessage();return}if(near(15,5))talkNpc();else if(near(4,4))challenge();else if(near(16,8))chest();else if(near(16,10))gate();else showMessage('Inner Coach','Move closer to a helper, practice board, chest, or gate.')}
+function interact(){AudioGame.unlock();AudioGame.sfx('click');if(state.platformMode){exitPlatformZone();return}if(E.discovery && E.discovery.style.display==='grid'){closeDiscovery();return}if(state.message){hideMessage();return}if(near(4,14,82))enterPlatformZone();else if(near(15,5))talkNpc();else if(near(4,4))challenge();else if(near(16,8))chest();else if(near(16,10))gate();else showMessage('Inner Coach','Move closer to a helper, practice board, chest, gate, or the Treehouse Climb.')}
 function talkNpc(){state.met=true;addTool(lvl().tool);state.step=Math.max(state.step,1);foxSpeak('npc');showMessage(lvl().npc,dialogueFor(lvl())+`<br><br><strong>New tool:</strong> ${lvl().tool}`);checkReady()}
 function dialogueFor(L){return `This is ${L.title}. Today we learn: <strong>${L.teach}</strong> The challenge gets harder as the tiers rise.`}
 function challenge(){const c=lvl().challenge;const choices={breath:['Take 3 slow breaths','Run in circles and yell'],tiny:['Pick one 2-minute step','Demand perfect focus all day'],return:['I noticed. I return.','I got distracted, so I quit.'],plan:['First, next, finish','Start with no plan'],timer:['10 minute sprint + break','Work forever without stopping'],body:['Stretch, walk, reset','Ignore body signals'],kind:['This is hard, and I can try','I am terrible at everything'],env:['Silence alerts and clear desk','Keep every distraction open'],priority:['Choose one main quest','Do all quests at once'],restart:['Begin again with one step','The day is ruined']};let [good,bad]=choices[c]||choices.breath;E.dialogueText.innerHTML=`<strong>Practice Board:</strong><br>${hardText()} Choose the ADHD-friendly response.`;E.dialogueActions.innerHTML=`<button class="good" onclick="answerChallenge(true)">${good}</button><button class="warn" onclick="answerChallenge(false)">${bad}</button>`;E.dialogue.style.display='block';state.message=true}
@@ -782,7 +784,7 @@ const next=nextFoxReward();
 E.foxRewards.innerHTML=`<div><strong>🦊 Fox Friendship:</strong> ${state.stars} Stars</div><div class="small">${next?`Next: ${next.icon} ${next.name} at ${next.stars} stars (${Math.max(0,next.stars-state.stars)} to go).`:'All fox upgrades unlocked!'}</div><div class="fox-reward-list">`+foxRewardMilestones.map(r=>`<div class="fox-reward-row ${state.stars>=r.stars?'unlocked':''}"><div class="fox-reward-icon">${state.stars>=r.stars?r.icon:'🔒'}</div><div><strong>${r.stars}⭐ ${r.name}</strong><span>${state.stars>=r.stars?'Unlocked':r.desc}</span></div></div>`).join('')+`</div>`;
 }
 function loop(){update();draw();ui();requestAnimationFrame(loop)}
-window.addEventListener('keydown',e=>{state.keys[e.key]=true;state.keys[e.key.toLowerCase()]=true;if([' ','e','E'].includes(e.key)){e.preventDefault();interact()}if(['j','J','Shift'].includes(e.key)){e.preventDefault();jump()}if(['f','F'].includes(e.key)){e.preventDefault();askFox()}if(['k','K'].includes(e.key)){e.preventDefault();slashFocusBlade()}if(['b','B'].includes(e.key))openBreathing()});window.addEventListener('keyup',e=>{state.keys[e.key]=false;state.keys[e.key.toLowerCase()]=false});const mobileDirs={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'};let activeMobileKeys=new Set();function setMobileKey(k,on,btn){state.mobileMoving=on||activeMobileKeys.size>0;if(on){activeMobileKeys.add(k);state.keys[k]=true;btn&&btn.classList.add('active')}else{activeMobileKeys.delete(k);state.keys[k]=false;btn&&btn.classList.remove('active')}state.mobileMoving=activeMobileKeys.size>0}function clearMobileKeys(){document.querySelectorAll('[data-dir]').forEach(btn=>btn.classList.remove('active'));activeMobileKeys.forEach(k=>state.keys[k]=false);activeMobileKeys.clear();state.mobileMoving=false}document.querySelectorAll('[data-dir]').forEach(b=>{const k=mobileDirs[b.dataset.dir];b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);setMobileKey(k,true,b)});b.addEventListener('pointerup',e=>{e.preventDefault();setMobileKey(k,false,b)});b.addEventListener('pointercancel',e=>{e.preventDefault();setMobileKey(k,false,b)});});window.addEventListener('pointerup',e=>{if(!e.target.closest('.mobile-pad')) clearMobileKeys()});window.addEventListener('blur',clearMobileKeys);document.querySelector('[data-action="interact"]').addEventListener('click',interact);const jumpBtn=document.querySelector('[data-action="jump"]');jumpBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();jump()});jumpBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});document.querySelector('[data-action="fox"]').addEventListener('click',askFox);document.querySelector('[data-action="breathe"]').addEventListener('click',openBreathing);const slashBtn=document.querySelector('[data-action="slash"]');if(slashBtn){slashBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();slashFocusBlade()});slashBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});}const audioBar=document.getElementById('audioBar'),audioToggle=document.getElementById('audioToggle');let audioCollapseTimer=null;function openAudioPanel(){audioBar.classList.remove('collapsed');audioToggle.textContent='✕';clearTimeout(audioCollapseTimer);audioCollapseTimer=setTimeout(()=>{audioBar.classList.add('collapsed');audioToggle.textContent='🎵'},4500)}function closeAudioPanel(){audioBar.classList.add('collapsed');audioToggle.textContent='🎵';clearTimeout(audioCollapseTimer)}audioToggle.addEventListener('click',()=>audioBar.classList.contains('collapsed')?openAudioPanel():closeAudioPanel());document.getElementById('musicBtn').addEventListener('click',()=>{openAudioPanel();AudioGame.toggle()});document.getElementById('sfxBtn').addEventListener('click',()=>{openAudioPanel();AudioGame.test()});
+window.addEventListener('keydown',e=>{state.keys[e.key]=true;state.keys[e.key.toLowerCase()]=true;if([' ','e','E'].includes(e.key)){e.preventDefault();interact()}if(['j','J','Shift'].includes(e.key)){e.preventDefault();jump()}if(['f','F'].includes(e.key)){e.preventDefault();askFox()}if(['k','K'].includes(e.key)){e.preventDefault();slashFocusBlade()}if(['p','P'].includes(e.key)){e.preventDefault();if(state.platformMode)exitPlatformZone();else if(near(4,14,120))enterPlatformZone()}if(['b','B'].includes(e.key))openBreathing()});window.addEventListener('keyup',e=>{state.keys[e.key]=false;state.keys[e.key.toLowerCase()]=false});const mobileDirs={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'};let activeMobileKeys=new Set();function setMobileKey(k,on,btn){state.mobileMoving=on||activeMobileKeys.size>0;if(on){activeMobileKeys.add(k);state.keys[k]=true;btn&&btn.classList.add('active')}else{activeMobileKeys.delete(k);state.keys[k]=false;btn&&btn.classList.remove('active')}state.mobileMoving=activeMobileKeys.size>0}function clearMobileKeys(){document.querySelectorAll('[data-dir]').forEach(btn=>btn.classList.remove('active'));activeMobileKeys.forEach(k=>state.keys[k]=false);activeMobileKeys.clear();state.mobileMoving=false}document.querySelectorAll('[data-dir]').forEach(b=>{const k=mobileDirs[b.dataset.dir];b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);setMobileKey(k,true,b)});b.addEventListener('pointerup',e=>{e.preventDefault();setMobileKey(k,false,b)});b.addEventListener('pointercancel',e=>{e.preventDefault();setMobileKey(k,false,b)});});window.addEventListener('pointerup',e=>{if(!e.target.closest('.mobile-pad')) clearMobileKeys()});window.addEventListener('blur',clearMobileKeys);document.querySelector('[data-action="interact"]').addEventListener('click',interact);const jumpBtn=document.querySelector('[data-action="jump"]');jumpBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();jump()});jumpBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});document.querySelector('[data-action="fox"]').addEventListener('click',askFox);document.querySelector('[data-action="breathe"]').addEventListener('click',openBreathing);const slashBtn=document.querySelector('[data-action="slash"]');if(slashBtn){slashBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();slashFocusBlade()});slashBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});}const audioBar=document.getElementById('audioBar'),audioToggle=document.getElementById('audioToggle');let audioCollapseTimer=null;function openAudioPanel(){audioBar.classList.remove('collapsed');audioToggle.textContent='✕';clearTimeout(audioCollapseTimer);audioCollapseTimer=setTimeout(()=>{audioBar.classList.add('collapsed');audioToggle.textContent='🎵'},4500)}function closeAudioPanel(){audioBar.classList.add('collapsed');audioToggle.textContent='🎵';clearTimeout(audioCollapseTimer)}audioToggle.addEventListener('click',()=>audioBar.classList.contains('collapsed')?openAudioPanel():closeAudioPanel());document.getElementById('musicBtn').addEventListener('click',()=>{openAudioPanel();AudioGame.toggle()});document.getElementById('sfxBtn').addEventListener('click',()=>{openAudioPanel();AudioGame.test()});
 
 // --- Sprite Sheet Integration v1 ---
 // Uses a cleaned transparent atlas generated from the concept sheet. If the image is not ready,
@@ -878,6 +880,268 @@ function drawFidgetFox(){
     ctx.strokeStyle='rgba(23,32,42,.3)';ctx.stroke();
     ctx.fillStyle='#17202a';ctx.font='900 11px system-ui';ctx.textAlign='left';wrapText(fox.tip,bx+10,by+16,170,13);
   }
+  ctx.restore();
+}
+
+
+// --- Integrated Treehouse Platform Zone: Focus Blade Reward Trial ---
+// This version keeps the overworld top-down and uses a stable Donkey-Kong/BurgerTime-style
+// ladder-and-platform challenge only after entering the in-world Treehouse Climb door.
+function platformEntranceWorld(){return {x:4*TILE,y:14*TILE,w:48,h:48}}
+function drawPlatformEntrance(){
+  if(state.level!==0 || state.hasFocusBlade) return;
+  const e=platformEntranceWorld();
+  ctx.save();
+  const pulse=.75+Math.sin(Date.now()/250)*.25;
+  ctx.fillStyle='rgba(255,246,191,.24)';ctx.beginPath();ctx.arc(e.x+24,e.y+24,38+pulse*6,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8b5e34';round(e.x+9,e.y+8,30,38,8);ctx.fill();
+  ctx.fillStyle='#d9b46f';ctx.fillRect(e.x+15,e.y+13,18,24);
+  ctx.strokeStyle='#5b371d';ctx.lineWidth=3;ctx.strokeRect(e.x+15,e.y+13,18,24);
+  ctx.fillStyle='#fff6bf';ctx.font='900 10px system-ui';ctx.textAlign='center';ctx.fillText('CLIMB',e.x+24,e.y-5);
+  drawStarShape(e.x+24,e.y+54,8,'#fff6bf','#f7c948');
+  ctx.restore();
+}
+function makePlatformZone(){
+  const coins=[
+    {x:205,y:494,taken:false},{x:370,y:494,taken:false},{x:565,y:494,taken:false},{x:755,y:494,taken:false},
+    {x:770,y:394,taken:false},{x:575,y:394,taken:false},{x:370,y:394,taken:false},{x:195,y:394,taken:false},
+    {x:210,y:294,taken:false},{x:420,y:294,taken:false},{x:620,y:294,taken:false},{x:790,y:294,taken:false},
+    {x:735,y:194,taken:false},{x:520,y:194,taken:false},{x:310,y:194,taken:false}
+  ];
+  return {
+    gravity:.68,
+    runSpeed:3.1,
+    climbSpeed:3.0,
+    jumpPower:-12.6,
+    grounded:false,
+    onLadder:false,
+    floor:null,
+    exit:{x:36,y:492,w:58,h:66},
+    floors:[
+      {x:40,y:552,w:860,h:18,label:'ground'},
+      {x:130,y:452,w:735,h:16,label:'lower'},
+      {x:100,y:352,w:760,h:16,label:'middle'},
+      {x:145,y:252,w:720,h:16,label:'upper'},
+      {x:250,y:152,w:520,h:16,label:'top'}
+    ],
+    ladders:[
+      {x:150,y:452,w:34,h:100},
+      {x:805,y:352,w:34,h:100},
+      {x:185,y:252,w:34,h:100},
+      {x:720,y:152,w:34,h:100},
+      {x:495,y:152,w:34,h:200}
+    ],
+    coins,
+    sword:{x:505,y:96,w:52,h:52,taken:false},
+    enemies:[
+      {x:330,y:426,w:26,h:26,dir:1,min:150,max:835,speed:1.05},
+      {x:520,y:326,w:26,h:26,dir:-1,min:115,max:835,speed:1.10},
+      {x:390,y:226,w:26,h:26,dir:1,min:160,max:835,speed:1.15}
+    ],
+    hurtCooldown:0,
+    messageTimer:0,
+    coinsTotal:coins.length
+  };
+}
+function enterPlatformZone(){
+  if(state.level!==0){showMessage('Fidget Fox','The Treehouse Climb is in Focus Forest.');return}
+  if(state.hasFocusBlade){foxSay('You already earned the Focus Blade. Nice work!');return}
+  state.platformReturn={x:player.x,y:player.y,dir:player.dir};
+  state.platformMode=true;
+  state.platformZone=makePlatformZone();
+  state.treehouseCoinsTotal=state.platformZone.coinsTotal;
+  state.treehouseCoinsCollected=0;
+  player.x=72;player.y=510;player.z=0;player.vz=0;player.vx=0;player.vy=0;player.jumping=false;player.dir='right';player.moving=false;player.landingSquash=0;
+  fox.x=player.x-42;fox.y=player.y+12;
+  foxSay('Treehouse Climb! Collect every Focus Coin. Use ladders with ↑/↓, jump with J or Shift, and claim the Focus Blade at the top.');
+  AudioGame.sfx('success');
+}
+function exitPlatformZone(){
+  const r=state.platformReturn||{x:4*TILE,y:14*TILE,dir:'down'};
+  state.platformMode=false;state.platformZone=null;state.platformReturn=null;
+  player.x=r.x;player.y=r.y+18;player.z=0;player.vz=0;player.vx=0;player.vy=0;player.jumping=false;player.dir=r.dir||'down';player.moving=false;
+  fox.x=player.x-42;fox.y=player.y+12;
+  if(!state.hasFocusBlade) foxSay('Come back to the Treehouse Climb when you are ready. The Focus Blade waits after every coin is collected.');
+  AudioGame.sfx('click');
+}
+function platformRectOverlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function zonePlayerRect(x=player.x,y=player.y){return {x:x+6,y:y+2,w:player.w-12,h:player.h-2}}
+function zonePlayerFeet(x=player.x,y=player.y){return {x:x+7,y:y+player.h-6,w:player.w-14,h:8}}
+function ladderAtPlayer(x=player.x,y=player.y){
+  const z=state.platformZone;if(!z) return null;
+  const r=zonePlayerRect(x,y);
+  return z.ladders.find(l=>platformRectOverlap(r,l))||null;
+}
+function floorUnderPlayer(x=player.x,y=player.y,vy=player.vy||0){
+  const z=state.platformZone;if(!z) return null;
+  const feetNow=player.y+player.h;
+  const feetNext=y+player.h;
+  const left=x+6,right=x+player.w-6;
+  for(const f of z.floors){
+    const crosses=feetNow<=f.y+8 && feetNext>=f.y && vy>=0;
+    const overlapsX=right>f.x && left<f.x+f.w;
+    if(crosses&&overlapsX) return f;
+  }
+  return null;
+}
+function standingFloor(x=player.x,y=player.y){
+  const z=state.platformZone;if(!z) return null;
+  const feet=y+player.h;
+  const left=x+6,right=x+player.w-6;
+  return z.floors.find(f=>Math.abs(feet-f.y)<4 && right>f.x && left<f.x+f.w)||null;
+}
+function updatePlatformZone(){
+  const z=state.platformZone;if(!z) return;
+  if(z.hurtCooldown>0) z.hurtCooldown--;
+  if(z.messageTimer>0) z.messageTimer--;
+  if(player.jumpCooldown>0) player.jumpCooldown--;
+  if(player.landingSquash>0) player.landingSquash--;
+
+  const left=state.keys.ArrowLeft||state.keys.a;
+  const right=state.keys.ArrowRight||state.keys.d;
+  const up=state.keys.ArrowUp||state.keys.w;
+  const down=state.keys.ArrowDown||state.keys.s;
+  const ladder=ladderAtPlayer();
+
+  player.vx=0;
+  if(left){player.vx=-z.runSpeed;player.dir='left'}
+  if(right){player.vx=z.runSpeed;player.dir='right'}
+  player.moving=!!(left||right||up||down);
+  if(player.moving) player.walkFrame+=0.31;
+
+  const wantsClimb=!!ladder && (up||down||z.onLadder);
+  z.onLadder=wantsClimb;
+  z.grounded=false;
+
+  if(z.onLadder){
+    player.jumping=false;
+    player.vy=0;
+    if(up) player.vy=-z.climbSpeed;
+    if(down) player.vy=z.climbSpeed;
+    player.x += ((ladder.x+ladder.w/2-player.w/2)-player.x)*0.22;
+  }else{
+    player.vy=(player.vy||0)+z.gravity;
+    if(player.vy>12) player.vy=12;
+  }
+
+  let nx=player.x+player.vx;
+  let ny=player.y+player.vy;
+
+  // Horizontal room bounds.
+  nx=Math.max(18,Math.min(920-player.w,nx));
+
+  const floor=floorUnderPlayer(nx,ny,player.vy||0);
+  if(floor){
+    ny=floor.y-player.h;
+    player.vy=0;
+    player.jumping=false;
+    z.grounded=true;
+    z.floor=floor.label;
+    if(player.landingSquash<=0) player.landingSquash=4;
+  }else if(standingFloor(nx,ny)){
+    z.grounded=true;
+  }
+
+  if(ny>570-player.h){
+    ny=570-player.h;player.vy=0;player.jumping=false;z.grounded=true;
+  }
+  ny=Math.max(38,ny);
+
+  player.x=nx;player.y=ny;
+
+  const pr=zonePlayerRect();
+
+  // Coins are the actual sword quest requirement.
+  let collectedNow=false;
+  z.coins.forEach(c=>{
+    if(c.taken) return;
+    if(Math.hypot((player.x+17)-c.x,(player.y+21)-c.y)<27){
+      c.taken=true;collectedNow=true;state.coins++;state.treehouseCoinsCollected++;
+      AudioGame.sfx('star');spawnParticles(c.x,c.y,'star',18);floatText(c.x,c.y-18,`Coin ${state.treehouseCoinsCollected}/${z.coinsTotal}`);
+    }
+  });
+  if(collectedNow && state.treehouseCoinsCollected>=z.coinsTotal){
+    foxSay('That is every Focus Coin! Climb to the glowing sword at the top and claim the Focus Blade.');
+  }
+
+  // Sword reward only unlocks after every coin.
+  const swordOpen=state.treehouseCoinsCollected>=z.coinsTotal;
+  if(!z.sword.taken && platformRectOverlap(pr,z.sword)){
+    if(swordOpen){
+      z.sword.taken=true;
+      state.hasFocusBlade=true;
+      state.platformPrize=true;
+      const reward=earnStar('Focus Blade Star');
+      AudioGame.sfx('fanfare');spawnParticles(z.sword.x+z.sword.w/2,z.sword.y+z.sword.h/2,'star',62);
+      foxSay('You earned the Focus Blade! Press K in the overworld to clear Distraction Bushes.'+(reward?` New fox reward unlocked: ${reward.name}!`:''),true);
+    }else if(z.messageTimer<=0){
+      z.messageTimer=120;
+      foxSay(`The sword is sealed. Collect every Focus Coin first: ${state.treehouseCoinsCollected}/${z.coinsTotal}.`);
+    }
+  }
+
+  // Simple enemies walk only along their platform lanes.
+  z.enemies.forEach(e=>{
+    e.x+=e.dir*e.speed;
+    if(e.x<e.min||e.x>e.max){e.dir*=-1;e.x=Math.max(e.min,Math.min(e.max,e.x));}
+    if(z.hurtCooldown<=0 && platformRectOverlap(pr,e)){
+      z.hurtCooldown=80;state.energy=Math.max(1,state.energy-1);AudioGame.sfx('error');spawnParticles(player.x+17,player.y+20,'jump',18);foxSay('Ouch! Watch the wandering worries and keep climbing.');
+      player.vy=-7;player.x+=e.dir*20;
+    }
+  });
+
+  if(platformRectOverlap(pr,z.exit) && (down||state.keys[' ']||state.keys.e)) exitPlatformZone();
+  updateFox();
+  ui();
+}
+function platformJump(){
+  const z=state.platformZone;if(!z) return false;
+  const ladder=ladderAtPlayer();
+  if(player.jumpCooldown>0) return true;
+  if(z.grounded || z.onLadder || ladder || standingFloor()){
+    player.vy=z.jumpPower;
+    player.jumping=true;
+    z.onLadder=false;
+    z.grounded=false;
+    player.jumpCooldown=18;
+    AudioGame.sfx('jump');
+    spawnParticles(player.x+17,player.y+38,'jump',12);
+  }
+  return true;
+}
+function drawPlatformZone(){
+  const z=state.platformZone;if(!z) return;
+  ctx.save();
+  const g=ctx.createLinearGradient(0,0,0,600);g.addColorStop(0,'#6dbb77');g.addColorStop(.58,'#7fc96d');g.addColorStop(1,'#4d8b55');ctx.fillStyle=g;ctx.fillRect(0,0,960,600);
+  ctx.fillStyle='rgba(255,246,191,.22)';ctx.beginPath();ctx.arc(820,82,58,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(33,69,47,.30)';for(let i=0;i<10;i++){ctx.beginPath();ctx.arc(i*110+40,105+(i%3)*35,70,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='rgba(23,32,42,.74)';round(18,16,455,50,14);ctx.fill();
+  ctx.fillStyle='white';ctx.font='900 17px system-ui';ctx.textAlign='left';ctx.fillText('🌲 Treehouse Focus Blade Trial',34,43);
+  ctx.font='800 12px system-ui';ctx.fillStyle='rgba(255,255,255,.86)';ctx.fillText(`Coins: ${state.treehouseCoinsCollected||0}/${z.coinsTotal}  ·  Move ← →  Climb ↑ ↓  Jump J/Shift  Exit door/P`,34,59);
+
+  // Exit door.
+  ctx.fillStyle='rgba(255,246,191,.22)';ctx.beginPath();ctx.arc(z.exit.x+z.exit.w/2,z.exit.y+z.exit.h/2,42,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#6b3f1d';round(z.exit.x,z.exit.y,z.exit.w,z.exit.h,8);ctx.fill();ctx.fillStyle='#d9b46f';ctx.fillRect(z.exit.x+14,z.exit.y+15,30,43);ctx.fillStyle='#fff6bf';ctx.font='900 11px system-ui';ctx.textAlign='center';ctx.fillText('EXIT',z.exit.x+z.exit.w/2,z.exit.y-8);
+
+  // Ladders behind platforms.
+  z.ladders.forEach(l=>{ctx.save();ctx.strokeStyle='#704214';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(l.x+5,l.y);ctx.lineTo(l.x+5,l.y+l.h);ctx.moveTo(l.x+l.w-5,l.y);ctx.lineTo(l.x+l.w-5,l.y+l.h);ctx.stroke();ctx.strokeStyle='#d9b46f';ctx.lineWidth=4;for(let y=l.y+10;y<l.y+l.h;y+=18){ctx.beginPath();ctx.moveTo(l.x+5,y);ctx.lineTo(l.x+l.w-5,y);ctx.stroke();}ctx.restore();});
+
+  // Long classic arcade platforms.
+  z.floors.forEach(f=>{ctx.save();ctx.fillStyle='rgba(0,0,0,.24)';ctx.fillRect(f.x+6,f.y+12,f.w,8);ctx.fillStyle='#704214';round(f.x,f.y,f.w,f.h,5);ctx.fill();ctx.fillStyle=f.label==='ground'?'#69db7c':'#d9b46f';round(f.x,f.y-5,f.w,8,4);ctx.fill();ctx.strokeStyle='rgba(23,32,42,.35)';ctx.lineWidth=2;ctx.stroke();ctx.restore();});
+
+  // Coins.
+  z.coins.forEach(c=>{if(c.taken)return;const bob=Math.sin(Date.now()/150+c.x)*3;ctx.save();ctx.fillStyle='#f7c948';ctx.strokeStyle='#704214';ctx.lineWidth=2;ctx.beginPath();ctx.arc(c.x,c.y+bob,9,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#fff6bf';ctx.font='900 11px system-ui';ctx.textAlign='center';ctx.fillText('$',c.x,c.y+bob+4);ctx.restore();});
+
+  // Sword prize.
+  const swordOpen=state.treehouseCoinsCollected>=z.coinsTotal;
+  if(!z.sword.taken){const s=z.sword,pulse=.75+Math.sin(Date.now()/190)*.25;ctx.save();ctx.globalAlpha=swordOpen?0.44:0.18;ctx.fillStyle=swordOpen?'#fff6bf':'#4b5563';ctx.beginPath();ctx.arc(s.x+s.w/2,s.y+s.h/2,38+pulse*7,0,Math.PI*2);ctx.fill();ctx.globalAlpha=swordOpen?1:.55;ctx.strokeStyle=swordOpen?'#ffffff':'#6b7280';ctx.lineWidth=4;ctx.shadowColor=swordOpen?'#9eff8f':'transparent';ctx.shadowBlur=swordOpen?16:0;ctx.beginPath();ctx.moveTo(s.x+s.w/2,s.y+8);ctx.lineTo(s.x+s.w/2,s.y+42);ctx.stroke();ctx.strokeStyle=swordOpen?'#ffd966':'#6b7280';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(s.x+14,s.y+30);ctx.lineTo(s.x+38,s.y+30);ctx.stroke();ctx.fillStyle=swordOpen?'#66fff2':'#9ca3af';ctx.beginPath();ctx.arc(s.x+s.w/2,s.y+30,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='white';ctx.font='900 11px system-ui';ctx.textAlign='center';ctx.fillText(swordOpen?'FOCUS BLADE':'LOCKED',s.x+s.w/2,s.y-8);ctx.restore();}
+
+  // Enemies.
+  z.enemies.forEach(e=>{ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(e.x+13,e.y+25,15,5,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7b61ff';round(e.x,e.y,e.w,e.h,7);ctx.fill();ctx.fillStyle='#fff6bf';ctx.fillRect(e.x+6,e.y+8,4,4);ctx.fillRect(e.x+16,e.y+8,4,4);ctx.restore();});
+
+  // Same Focus Frank renderer.
+  drawPlayer();
+  updateFox();drawFidgetFox();drawParticles();drawFlyingStars();drawVignette();
   ctx.restore();
 }
 
